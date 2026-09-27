@@ -1,0 +1,42 @@
+# dependensi
+node_modules/
+.pnp
+.pnp.js
+
+# hasil build next
+.next/
+out/
+build/
+dist/
+
+# env, JANGAN pernah di-commit
+.env
+.env.local
+.env*.local
+!.env.local.example
+
+# vercel
+.vercel
+
+# next
+next-env.d.ts
+*.tsbuildinfo
+
+# sistem operasi
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# editor
+.vscode/*
+!.vscode/extensions.json
+.idea/
+
+# log
+npm-debug.log*
+yarn-error.log*
+*.log
+
+# cadangan lokal
+*.zip
+*.bak

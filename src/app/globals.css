@@ -1,0 +1,255 @@
+@import "tailwindcss";
+
+/* Gelap dipasang lewat kelas .dark pada <html>, bukan prefers-color-scheme,
+   supaya pilihan pemakai bertahan dan tidak berkedip saat halaman dimuat. */
+@custom-variant dark (&:where(.dark, .dark *));
+
+/* ==========================================================================
+   Token. Nilai dan alasannya ada di DESIGN.md. Jangan tulis warna langsung
+   di komponen, selalu lewat nama token ini.
+   ========================================================================== */
+@theme {
+  /* --- Merek dan permukaan --- */
+  --color-primary: oklch(0.42 0.072 197);
+  --color-primary-600: oklch(0.36 0.075 197);
+  --color-primary-fg: oklch(0.99 0 0);
+  --color-primary-soft: oklch(0.95 0.025 197);
+  --color-link: oklch(0.42 0.072 197);
+
+  --color-paper: oklch(0.976 0.002 197);
+  --color-surface: oklch(1 0 0);
+  --color-sidebar: oklch(0.945 0.005 197);
+
+  /* --- Teks --- */
+  --color-ink: oklch(0.24 0.006 197);
+  --color-ink-muted: oklch(0.45 0.008 197);
+  --color-line: oklch(0.9 0.004 197);
+
+  /* --- Status. Tiap status punya pasangan: warna teks dan warna latar lunak --- */
+  --color-ok: oklch(0.45 0.11 155);
+  --color-ok-soft: oklch(0.95 0.04 155);
+
+  --color-busy: oklch(0.47 0.1 70);
+  --color-busy-soft: oklch(0.96 0.05 85);
+
+  --color-danger: oklch(0.5 0.19 25);
+  --color-danger-soft: oklch(0.96 0.03 25);
+
+  --color-accent: oklch(0.78 0.09 222);
+  --color-focus: oklch(0.42 0.072 197);
+
+  /* --- Tipografi --- */
+  --font-display: var(--font-manrope), ui-sans-serif, system-ui, sans-serif;
+  --font-body: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
+  --font-sans: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
+  --font-numeric: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
+
+  /* --- Sudut dan elevasi --- */
+  --radius-sm: 6px;
+  --radius-md: 10px;
+  --radius-lg: 16px;
+
+  --shadow-pop: 0 1px 2px oklch(0.24 0.006 197 / 0.06),
+                0 8px 24px oklch(0.24 0.006 197 / 0.1);
+  --shadow-menu: 0 1px 2px oklch(0.24 0.006 197 / 0.05),
+                 0 12px 32px oklch(0.24 0.006 197 / 0.14);
+
+  /* --- Durasi. Hanya tiga ini yang dipakai, jangan bikin nilai baru --- */
+  --dur-cepat: 120ms;
+  --dur-sedang: 180ms;
+  --dur-lambat: 220ms;
+}
+
+/* ==========================================================================
+   Gelap. Hanya nilai token yang diganti, komponen tidak tahu-menahu.
+   ========================================================================== */
+.dark {
+  --color-primary: oklch(0.56 0.085 197);
+  --color-primary-600: oklch(0.63 0.085 197);
+  --color-primary-fg: oklch(0.16 0.012 197);
+  --color-primary-soft: oklch(0.3 0.04 197);
+  --color-link: oklch(0.79 0.085 197);
+
+  --color-paper: oklch(0.185 0.008 197);
+  --color-surface: oklch(0.235 0.009 197);
+  --color-sidebar: oklch(0.21 0.008 197);
+
+  --color-ink: oklch(0.95 0.004 197);
+  --color-ink-muted: oklch(0.72 0.008 197);
+  --color-line: oklch(0.32 0.008 197);
+
+  --color-ok: oklch(0.78 0.11 155);
+  --color-ok-soft: oklch(0.29 0.05 155);
+
+  --color-busy: oklch(0.82 0.1 85);
+  --color-busy-soft: oklch(0.3 0.055 85);
+
+  --color-danger: oklch(0.75 0.13 25);
+  --color-danger-soft: oklch(0.3 0.06 25);
+
+  --color-accent: oklch(0.62 0.075 222);
+  --color-focus: oklch(0.79 0.085 197);
+}
+
+/* ==========================================================================
+   Dasar
+   ========================================================================== */
+@layer base {
+  html {
+    color-scheme: light;
+    /* clip, bukan hidden: tidak memotong fokus dan tidak mematikan position sticky */
+    overflow-x: clip;
+  }
+
+  html.dark {
+    color-scheme: dark;
+  }
+
+  body {
+    overflow-x: clip;
+    background-color: var(--color-paper);
+    color: var(--color-ink);
+    font-family: var(--font-body);
+    font-size: 0.9375rem;
+    line-height: 1.5;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  h1,
+  h2,
+  h3,
+  h4 {
+    font-family: var(--font-display);
+    font-weight: 700;
+    letter-spacing: -0.011em;
+    text-wrap: balance;
+  }
+
+  p {
+    text-wrap: pretty;
+  }
+
+  /* Fokus selalu terlihat dan tidak pernah dianimasikan. */
+  :focus-visible {
+    outline: 2px solid var(--color-focus);
+    outline-offset: 2px;
+    transition: none;
+  }
+
+  /* Angka yang berubah sendiri tidak boleh menggeser tata letak. */
+  .angka,
+  table td.num,
+  table th.num {
+    font-family: var(--font-numeric);
+    font-variant-numeric: tabular-nums;
+  }
+
+  ::selection {
+    background-color: var(--color-accent);
+    color: var(--color-ink);
+  }
+}
+
+/* ==========================================================================
+   Ikon: Material Symbols. Outline sebagai default, isi hanya untuk keadaan aktif.
+   ========================================================================== */
+.material-symbols-outlined {
+  font-variation-settings: "FILL" 0, "wght" 400, "GRAD" 0, "opsz" 24;
+  font-size: inherit;
+  line-height: 1;
+  vertical-align: middle;
+  user-select: none;
+  flex: none;
+}
+
+.ms-aktif {
+  font-variation-settings: "FILL" 1, "wght" 500, "GRAD" 0, "opsz" 24;
+}
+
+/* ==========================================================================
+   Tiga primitif gerak. Tidak ada yang lain. Lihat DESIGN.md.
+   ========================================================================== */
+@keyframes joyops-muncul {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes joyops-naik {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes joyops-pop {
+  0% {
+    transform: scale(1);
+  }
+  45% {
+    transform: scale(1.035);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
+.gerak-muncul {
+  animation: joyops-muncul var(--dur-sedang) cubic-bezier(0, 0, 0.2, 1) both;
+}
+
+.gerak-naik {
+  animation: joyops-naik var(--dur-lambat) cubic-bezier(0, 0, 0.2, 1) both;
+}
+
+.gerak-pop {
+  animation: joyops-pop var(--dur-lambat) cubic-bezier(0.4, 0, 0.2, 1) both;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .gerak-muncul,
+  .gerak-naik,
+  .gerak-pop {
+    animation: none;
+  }
+
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* ==========================================================================
+   Beberapa penyesuaian kecil yang tidak layak jadi token
+   ========================================================================== */
+
+/* Tombol dan tautan tidak memakai transisi "all". Properti disebut eksplisit. */
+.joyops-aksi {
+  transition:
+    background-color var(--dur-cepat) cubic-bezier(0, 0, 0.2, 1),
+    border-color var(--dur-cepat) cubic-bezier(0, 0, 0.2, 1),
+    color var(--dur-cepat) cubic-bezier(0, 0, 0.2, 1),
+    transform var(--dur-cepat) cubic-bezier(0, 0, 0.2, 1),
+    opacity var(--dur-cepat) cubic-bezier(0, 0, 0.2, 1);
+}
+
+.joyops-aksi:active:not(:disabled) {
+  transform: scale(0.96);
+}
+
+/* Garis pemisah tabel yang tenang */
+tbody tr + tr > td {
+  border-top: 1px solid var(--color-line);
+}
