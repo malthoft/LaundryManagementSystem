@@ -1,198 +1,96 @@
-# JoyOps
+# 📘 Buku Panduan Penggunaan Sistem JoyOps (Laundry)
 
-Sistem operasional laundry: kasir, mesin, jadwal shift, absensi, dan buku kas.
-
-Versi 3.0. Sebelumnya PHP prosedural dengan MariaDB (v2.1). Sekarang Next.js,
-React, TypeScript, dan Supabase Postgres.
-
-- Arah desain: `DESIGN.md`
-- Kebutuhan produk: `docs/PRD.md`
-- Spesifikasi teknis: `docs/TECHNICAL_SPEC.md`
-- Rencana kerja dan status: `docs/IMPLEMENTATION_PLAN.md`
-- Manual pengguna: `docs/Guide_Book_JoyOps.md`
+## 📌 Pendahuluan
+JoyOps adalah sistem manajemen operasional laundry modern. Sistem ini dirancang dengan dua jenis hak akses utama:
+1. **Admin (Pemilik/Manajer)**: Mengelola seluruh operasional, layanan, mesin, laporan keuangan, dan penjadwalan karyawan.
+2. **Karyawan (Staf Operasional)**: Melakukan update status pencucian, melayani transaksi pendaftaran cucian pelanggan dari mesin, dan melihat histori/jadwal shift.
 
 ---
 
-## Stack
+## 🔑 1. Akses & Login ke dalam Sistem
+Semua pengguna (Admin maupun Karyawan) mengakses lewat situs (web) yang sama.
+1. Buka alamat / URL sistem JoyOps di browser Anda.
+2. Masukkan **Username** dan **Password** yang telah didaftarkan.
+3. Klik tombol **Login**. 
+   *(Sistem akan otomatis mengenali apakah akun Anda adalah Admin atau Karyawan dan menampilkan fitur yang sesuai dengan peran Anda.)*
 
-| Lapisan | Pilihan | Alasan |
-|---|---|---|
-| Kerangka | Next.js 15 App Router | Server component untuk baca data, server action untuk tulis |
-| Bahasa | TypeScript strict | Tidak ada `any` |
-| Gaya | Tailwind v4 dengan token `@theme` | Token didefinisikan sekali di `src/app/globals.css` |
-| Database | Supabase Postgres + RLS | Izin dijaga di database, bukan hanya di tampilan |
-| Auth | Supabase Auth | Login memakai username, dipetakan ke email sintetis |
-| Gerak | Primitif CSS di `globals.css`: `gerak-muncul`, pasangan `panel-*`, `menu-*`, `toast-*` (masuk/keluar) | Hanya transisi antar keadaan, lihat `DESIGN.md`. Tidak ada pustaka animasi |
-| PDF | pdf-lib | Ekspor buku kas |
 
-## Arsitektur
+---
 
-Tiga lapisan, batasnya tegas. Rinciannya di `docs/TECHNICAL_SPEC.md` bagian 2.
+## 👤 2. Panduan Karyawan (Staff Portal)
+Karyawan berfokus pada kegiatan operasional pencucian harian. Antarmuka karyawan lebih ringkas.
 
-```
-View        src/app/**/page.tsx, src/components/**   Komponen server + komponen klien
-Controller  src/controllers/*.ts                     Server action. Batas kepercayaan.
-Model       src/models/*.ts                          Query Supabase, tanpa aturan bisnis
-```
+### 2.1. Dashboard Karyawan
+Menampilkan informasi singkat mengenai jadwal Anda.
+- **Status Shift:** Memperlihatkan jadwal masuk & pulang Anda hari ini, beserta posisi stasiun kerja (Assigned Station).
+- **Notifikasi Pintar:** Segala update dari Admin (misal: shift baru) dapat dilihat pada ikon lonceng di pojok kanan atas.
 
-Aturan yang mengikat:
 
-1. View tidak pernah mengimpor klien Supabase untuk menulis. Membaca boleh
-   lewat fungsi `ambil*` di `src/models`.
-2. Hanya controller yang menulis ke database.
-3. Controller selalu mengembalikan `Hasil<T>`, tidak pernah melempar error ke klien.
-4. Izin dijaga RLS di database, lalu dicek ulang di controller untuk pesan yang manusiawi.
+### 2.2. Jadwal & Shift Saya (My Shift)
+Menu ini digunakan untuk memeriksa jadwal kerja harian Anda.
+- **Weekly Schedule**: Di sini Anda dapat melihat jadwal bekerja dan jam kerja yang sudah dialokasikan oleh Admin untuk minggu berjalan (Senin-Minggu).
+- **History**: Melihat catatan shift Anda yang telah selesai pada hari-hari sebelumnya.
 
-## Menyiapkan Supabase
 
-1. Buat proyek baru di [supabase.com](https://supabase.com).
-2. Buka SQL Editor, jalankan isi `supabase/01_schema.sql`.
-   Berisi 12 tabel, fungsi, trigger, dan seluruh policy RLS.
-3. Jalankan `supabase/02_seed.sql`. Berisi layanan, add-on, dan 12 mesin awal.
-4. Buka Settings, API. Catat Project URL, anon key, dan service role key.
+### 2.3. Operasional Mesin & Mencatat Transaksi (Penting!)
+Ini adalah **fungsi utama Karyawan** untuk memproses cucian dan secara tidak langsung bertindak sebagai kasir.
+1. Masuk ke menu **Machines**. Anda akan melihat daftar semua unit mesin cuci/pengering beserta statusnya.
+2. **Memulai Cucian Pelanggan (Menambah Pemasukan Baru):**
+   - Pilih satu Mesin yang berstatus **Tersedia (Available)**.
+   - Klik **Update Status** pada mesin tersebut.
+   - Ubah status menjadi **Digunakan (In Use)**.
+   - **Form Layanan akan Otomatis Muncul!** Pilih *Service* yang diinginkan (Misal: Cuci Kering Reguler).
+   - Masukkan **Kuantitas/Qty** (contoh: 5 jika beratnya 5 Kg).
+   - Klik **Save/Simpan**.
+   - *Voila! Sistem akan merubah warna mesin dan otomatis mencatat uang transaksi pemasukan ke Keuangan berdasarkan Harga Layanan dikalikan Kuantitas.*
+3. **Menyelesaikan Cucian:**
+   - Setelah cucian selesai fisik dari mesin, klik lagi mesin yang tadi.
+   - Ubah Status kembali menjadi **Tersedia (Available)** agar bisa digunakan pelanggan berikutnya.
 
-`supabase/03_auth_users.sql` adalah jalur cadangan bila akun harus dibuat
-lewat SQL. Jalur utama ada di skrip Node pada langkah berikutnya.
 
-Jalur cadangan itu dipakai kalau `SUPABASE_SERVICE_ROLE_KEY` belum diisi:
-tanpa kunci tersebut, `npm run seed:akun` tidak bisa membuat akun. Cara
-menjalankannya, dari mesin sendiri:
+### 2.4. Daftar Layanan (Services)
+Menu yang berisi katalog layanan dan daftar harganya sebagai referensi tatkala Anda butuh menginformasikan harga kepada pembeli.
 
-```bash
-# ganti nilai PGHOST/PGUSER/PGPASSWORD dengan milik proyek Anda
-psql "host=aws-0-<wilayah>.pooler.supabase.com port=6543 dbname=postgres \
-      user=postgres.<project-ref> password=<password-database> sslmode=require" \
-      -f supabase/03_auth_users.sql
-```
+---
 
-Berkas itu membuat tiga akun contoh (satu Admin, dua Karyawan) dengan sandi
-sementara `JoyOps#2026`. Ganti sandi itu setelah login pertama.
+## 👑 3. Panduan Admin (Admin Portal)
+Admin dapat melihat "dapur" aplikasi secara utuh dan memegang kontrol atas seluruh pemasukan dan pelaporan.
 
-## Variabel lingkungan
+### 3.1. Dashboard Admin
+Halaman ringkasan bisnis secara komprehensif. Anda bisa memantau beberapa metrik:
+- **Pendapatan Hari Ini:** Menampilkan total pemasukan dari transaksi karyawan tanpa harus menghitung ulang (Real-time).
+- **Status Mesin:** Cepat memantau mana mesin yang nganggur (Tersedia), mesin yang dipakai, maupun yang sedang rusak (Maintenance).
+- **Transaksi & Staf:** Ringkasan jumlah transaksi tercatat di hari itu dan jumlah staf yang berstatus aktif.
 
-Salin `.env.local.example` menjadi `.env.local`, lalu isi:
 
-| Nama | Rahasia | Isi |
-|---|---|---|
-| `NEXT_PUBLIC_SUPABASE_URL` | tidak | `https://xxxx.supabase.co` |
-| `NEXT_PUBLIC_SUPABASE_ANON_KEY` | tidak | Kunci anon. Aman di klien karena RLS aktif |
-| `SUPABASE_SERVICE_ROLE_KEY` | **ya** | Hanya untuk membuat karyawan dan reset sandi. Jangan pernah dipakai di komponen klien |
-| `AUTH_EMAIL_DOMAIN` | tidak | Default `joyops.local` |
-| `NEXT_PUBLIC_APP_NAME` | tidak | `JoyOps` |
+### 3.2. Manajemen Mesin (Machines)
+Mendatar semua inventaris mesin cuci/pengering yang ada di toko.
+- Klik **Add Machine** untuk mendaftarkan alat baru (isi Kode Mesin, seperti MCB-01, dan Tipe Mesin: Washer/Dryer).
+- Jika ada mesin yang mogok kerja, Admin bisa menonaktifkannya dengan melakukan *Update Status* menjadi **Maintenance** sehingga tak bisa ditekan oleh Karyawan.
 
-`.env.local` ada di `.gitignore` dan tidak boleh di-commit.
+### 3.3. Mengatur Katalog Tarif & Layanan (Services)
+- Klik **Add Service** untuk menambah jenis layanan.
+- Anda dapat menginput: Nama Layanan, Deskripsi, Harga (Per Kg/Pcs), dan estimasi waktu selesai. (Tarif ini nanti akan terkoneksi langsung dengan Pilihan Karyawan di panel mesin).
 
-## Menjalankan
 
-```bash
-npm install
-npm run seed:akun     # membuat akun dari daftar di scripts/seed-auth-users.mjs
-npm run dev           # http://localhost:3000
-```
+### 3.4. Menjadwalkan Pergeseran Karyawan (Shifts)
+Fitur untuk merencanakan jam kerja tim.
+- Klik opsi Registrasi **New Shift**.
+- Pilih nama karyawan dari *dropdown*, tentukan Tanggalnya, mulainya jam berapa dan selesai jam berapa. Tentukan pula ia bertugas di bagian (Station) mana (Misal: Kasir/Lipat/Cuci).
+- Shift yang didaftarkan akan berstatus "Scheduled" dan Karyawan akan melihatnya di *gadget* mereka.
 
-Skrip `seed:akun` membaca daftar akun di `scripts/seed-auth-users.mjs`
-(Admin `admin`, karyawan `operator1` dan `operator2`) dan memakai sandi sementara
-`JoyOps#2026` bila `SEED_TEMP_PASSWORD` tidak diisi. Ubah daftarnya sesuai toko,
-lalu ganti sandi setiap akun setelah login pertama.
+### 3.5. Manajemen Pegawai & HR (Employees)
+Jika ada karyawan baru yang direkrut, buatkan akun mereka di sini.
+- Klik tombol tambah, isi Nama, Alamat, Email, *Username* serta *Password* (Minta karyawan mengingatnya dengan baik).
+- Sistem akan mempersiapkan ruang masuk atas nama mereka. Anda pun bisa mengeditnya di hari mendatang jika ada kesalahan.
 
-Skrip lain:
 
-```bash
-npm run typecheck     # tsc --noEmit
-npm run lint          # eslint
-npm run cek:kontras   # periksa kontras token WCAG AA, terang dan gelap
-npm run build         # build produksi
-```
+### 3.6. Buku Kas & Laporan Keuangan (Finance)
+Tempat pembukuan uang masuk dan keluar secara mendetail.
+- Semua uang yang disubmit di Panel Mesin oleh Karyawan sudah terkumpul secara rapi di sini.
+- **Transaksi Manual:** Jika ada pengeluaran seperti (Beli detergen, Tagihan Listrik), klik **Record Transaction**, jadikan tipenya *Pengeluaran*, lalu tulis Jumlah dan Keterangannya.
+- **Export Laporan (Download Laporan):** Pada panel *Export Report* (atau *Export Statement*), Anda bisa menentukan rentang tanggal awal dan akhir (misal 1 Januari - 31 Januari) dan sistem akan menghasilkan form Excel/PDF (bila disetting). Sangat cocok diberikan pada investor!
 
-## Mengembangkan dengan Supabase lokal
 
-Berguna kalau tidak ingin menyentuh proyek produksi. Butuh Docker.
-
-```bash
-npx supabase start                       # menyalakan Postgres, Auth, REST, Studio
-docker exec -i supabase_db_JoyOps psql -U postgres -d postgres < supabase/01_schema.sql
-docker exec -i supabase_db_JoyOps psql -U postgres -d postgres < supabase/02_seed.sql
-docker exec -i supabase_db_JoyOps psql -U postgres -d postgres < supabase/03_auth_users.sql
-```
-
-Setelah itu `.env.local` diisi dengan nilai yang dicetak `npx supabase status`
-(URL `http://127.0.0.1:54321`, anon key, service role key). Akun contoh:
-`admin` sebagai Admin, `operator1` dan `operator2` sebagai karyawan, sandi
-sementara `JoyOps#2026`. Studio ada di `http://127.0.0.1:54323`.
-
-Hentikan dengan `npx supabase stop`.
-
-## Deploy ke Vercel
-
-1. Push repo ke GitHub.
-2. Di Vercel, Import Project, pilih repo ini. Framework terdeteksi otomatis.
-3. Isi Environment Variables yang sama seperti `.env.local`, untuk Production,
-   Preview, dan Development.
-4. Deploy. Setelah itu jalankan `npm run seed:akun` dengan env produksi bila
-   akun karyawan dibuat belakangan.
-
-Catatan: `SUPABASE_SERVICE_ROLE_KEY` hanya boleh ada di Environment Variables
-server. Jangan pernah menaruhnya di variabel berawalan `NEXT_PUBLIC_`.
-
-## Peran dan izin
-
-| Peran | Bisa |
-|---|---|
-| Admin | Semua: order, mesin, jadwal, absensi, buku kas, data karyawan |
-| Karyawan | Order, mesin (lihat), shift sendiri, absensi sendiri, layanan (lihat) |
-
-Karyawan tidak bisa membaca tabel `transactions`. Pembatasan itu policy RLS di
-database, jadi tetap berlaku walau permintaan dibuat langsung ke API Supabase
-tanpa lewat aplikasi.
-
-Daftar rekan kerja (`profiles`) boleh dibaca semua karyawan yang sudah masuk,
-karena dipakai di layar kerja: kolom Kasir pada tabel order dan nama rekan pada
-pengajuan tukar shift. Isinya hanya identitas kerja, tanpa bahan rahasia.
-Menulis ke tabel itu tetap hanya untuk Admin, jadi peran tidak bisa dinaikkan
-sendiri.
-
-## Struktur folder
-
-```
-src/
-  app/
-    layout.tsx              html, font, skrip tema
-    globals.css             token Tailwind dan gaya dasar
-    page.tsx                arahkan ke /dashboard
-    login/                  halaman masuk
-    (app)/                  kerangka: sidebar, bilah atas, penjaga sesi
-      dashboard/  orders/  machines/  shifts/  my-shift/
-      attendance/  services/  finance/  employees/  settings/  guide/
-      loading.tsx  error.tsx
-  components/
-    shell/                  Kerangka, Sidebar, LoncengNotifikasi, MenuProfil
-    ui/                     Tombol, Kartu, Kolom, Tabel, Modal, Keadaan, dst
-    orders/ machines/ services/ shifts/ finance/ employees/ settings/ dashboard/
-  controllers/              server action, batas kepercayaan
-  models/                   query Supabase
-  lib/                      auth, constants, format, date, validation, supabase/*
-  types/                    db.ts (baris tabel), domain.ts (bentuk gabungan)
-supabase/                   01_schema.sql, 02_seed.sql, 03_auth_users.sql, config.toml
-scripts/                    seed-auth-users.mjs
-docs/                       PRD, spec teknis, rencana, manual pengguna
-```
-
-`supabase/config.toml` hanya dipakai kalau Anda ingin menjalankan Supabase di
-mesin sendiri (`supabase start`). Untuk proyek cloud, berkas itu tidak
-mengganggu dan boleh diabaikan.
-
-## Menambah kolom atau tabel
-
-1. Ubah `supabase/01_schema.sql`, lalu jalankan perubahannya di SQL Editor.
-2. Setiap tabel baru wajib langsung punya RLS dan policy. Tabel tanpa policy
-   dianggap bug.
-3. Tambahkan tipe barisnya di `src/types/db.ts`, lalu fungsi `ambil*`/`ubah*`
-   di `src/models/`.
-4. Baru terakhir dipakai di controller dan halaman.
-
-## Yang sudah terbukti jalan
-
-Lihat bagian verifikasi di `docs/IMPLEMENTATION_PLAN.md`. Ringkasnya:
-`npm run build`, `npm run lint`, dan `npm run typecheck` hijau; seluruh 15 rute
-merespons; halaman masuk tampil; keadaan memuat, kosong, dan gagal tersedia di
-setiap layar data.
+### 3.7. Pengaturan Bisnis (Settings)
+Sesuaikan informasi *Company Profile*, Nama Toko/Laundry, Kontak HP, maupun alamat toko yang memengaruhi sistem.
