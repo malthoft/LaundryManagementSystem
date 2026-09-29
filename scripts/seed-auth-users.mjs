@@ -59,9 +59,9 @@ if (!url || !serviceKey) {
 // --- daftar akun ------------------------------------------------------------
 // Ubah daftar ini sesuai kebutuhan toko. `username` dipakai untuk login.
 const AKUN = [
-  { username: "althof123", fullName: "Althof Taqiyyuddin", role: "Admin" },
-  { username: "damar", fullName: "Damar Galih", role: "Karyawan" },
-  { username: "adnan", fullName: "Adnan Amhar", role: "Karyawan" },
+  { username: "admin", fullName: "Administrator", role: "Admin" },
+  { username: "operator1", fullName: "Operator Satu", role: "Karyawan" },
+  { username: "operator2", fullName: "Operator Dua", role: "Karyawan" },
 ];
 
 const admin = createClient(url, serviceKey, {

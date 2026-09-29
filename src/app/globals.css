@@ -34,6 +34,7 @@
 
   --color-danger: oklch(0.5 0.19 25);
   --color-danger-soft: oklch(0.96 0.03 25);
+  --color-danger-fg: oklch(0.99 0 0);
 
   --color-accent: oklch(0.78 0.09 222);
   --color-focus: oklch(0.42 0.072 197);
@@ -44,28 +45,43 @@
   --font-sans: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
   --font-numeric: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
 
+  /* Ukuran teks. Dipakai lewat text-nano sampai text-sedang, bukan
+     text-[0.8125rem] yang menularkan nilai ajaib ke seluruh komponen.
+     Bodynya sendiri 0.9375rem, lihat @layer base. */
+  --text-nano: 0.625rem;
+  --text-mikro: 0.6875rem;
+  --text-mini: 0.75rem;
+  --text-kecil: 0.8125rem;
+  --text-sedang: 0.9375rem;
+
+  /* Ukuran ikon Material Symbols, yang mengikuti font-size. */
+  --text-ikon: 1.75rem;
+  --text-ikon-besar: 2rem;
+
   /* --- Sudut dan elevasi --- */
   --radius-sm: 6px;
   --radius-md: 10px;
   --radius-lg: 16px;
 
-  --shadow-pop: 0 1px 2px oklch(0.24 0.006 197 / 0.06),
-                0 8px 24px oklch(0.24 0.006 197 / 0.1);
+  /* Satu nilai bayangan saja: hanya elemen yang memang mengambang
+     (modal, menu, panel notifikasi) yang boleh memakainya. */
   --shadow-menu: 0 1px 2px oklch(0.24 0.006 197 / 0.05),
                  0 12px 32px oklch(0.24 0.006 197 / 0.14);
 
-  /* --- Durasi. Hanya tiga ini yang dipakai, jangan bikin nilai baru --- */
+  /* --- Durasi. Hanya ini yang dipakai, jangan bikin nilai baru --- */
   --dur-cepat: 120ms;
   --dur-sedang: 180ms;
-  --dur-lambat: 220ms;
+  /* Panel mengambang butuh sedikit lebih panjang supaya terasa mengendur */
+  --dur-panel: 260ms;
+  --dur-keluar: 160ms;
 }
 
 /* ==========================================================================
    Gelap. Hanya nilai token yang diganti, komponen tidak tahu-menahu.
    ========================================================================== */
 .dark {
-  --color-primary: oklch(0.56 0.085 197);
-  --color-primary-600: oklch(0.63 0.085 197);
+  --color-primary: oklch(0.72 0.085 197);
+  --color-primary-600: oklch(0.78 0.085 197);
   --color-primary-fg: oklch(0.16 0.012 197);
   --color-primary-soft: oklch(0.3 0.04 197);
   --color-link: oklch(0.79 0.085 197);
@@ -86,8 +102,9 @@
 
   --color-danger: oklch(0.75 0.13 25);
   --color-danger-soft: oklch(0.3 0.06 25);
+  --color-danger-fg: oklch(0.16 0.012 25);
 
-  --color-accent: oklch(0.62 0.075 222);
+  --color-accent: oklch(0.5 0.075 222);
   --color-focus: oklch(0.79 0.085 197);
 }
 
@@ -168,8 +185,27 @@
 }
 
 /* ==========================================================================
-   Tiga primitif gerak. Tidak ada yang lain. Lihat DESIGN.md.
+   Primitif gerak. Hanya yang benar-benar dipakai yang ada di sini; lihat
+   DESIGN.md untuk aturannya.
    ========================================================================== */
+
+/* Denyut skeleton: hanya opacity, jadi tidak memicu layout dan tetap
+   60 FPS. Satu keyframe dipakai ulang semua placeholder, bukan satu
+   animasi per elemen. */
+@keyframes joyops-skeleton {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.45;
+  }
+}
+
+.skeleton {
+  animation: joyops-skeleton 1.6s ease-in-out infinite;
+}
+
 @keyframes joyops-muncul {
   from {
     opacity: 0;
@@ -179,45 +215,160 @@
   }
 }
 
-@keyframes joyops-naik {
-  from {
-    opacity: 0;
-    transform: translateY(6px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-@keyframes joyops-pop {
-  0% {
-    transform: scale(1);
-  }
-  45% {
-    transform: scale(1.035);
-  }
-  100% {
-    transform: scale(1);
-  }
-}
-
 .gerak-muncul {
   animation: joyops-muncul var(--dur-sedang) cubic-bezier(0, 0, 0.2, 1) both;
 }
 
-.gerak-naik {
-  animation: joyops-naik var(--dur-lambat) cubic-bezier(0, 0, 0.2, 1) both;
+/* --------------------------------------------------------------------------
+   Panel mengambang: modal dan panel notifikasi. Muncul dengan skala kecil ke
+   penuh, hilang dengan skala mengecil. Kurvanya melengkung, bukan linear,
+   supaya geraknya terasa mengendur dan tidak kaku.
+   Dipakai berpasangan: `panel-masuk` saat tampil, `panel-keluar` saat pergi.
+   -------------------------------------------------------------------------- */
+
+@keyframes joyops-panel-masuk {
+  from {
+    opacity: 0;
+    transform: scale(0.96) translateY(4px);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
 }
 
-.gerak-pop {
-  animation: joyops-pop var(--dur-lambat) cubic-bezier(0.4, 0, 0.2, 1) both;
+@keyframes joyops-panel-keluar {
+  from {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+  to {
+    opacity: 0;
+    transform: scale(0.97) translateY(2px);
+  }
+}
+
+@keyframes joyops-latar-masuk {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes joyops-latar-keluar {
+  from {
+    opacity: 1;
+  }
+  to {
+    opacity: 0;
+  }
+}
+
+.panel-masuk {
+  animation: joyops-panel-masuk var(--dur-panel) cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+.panel-keluar {
+  animation: joyops-panel-keluar var(--dur-keluar) cubic-bezier(0.4, 0, 0.6, 1) both;
+}
+
+/* Halaman di belakang dialog tidak ikut bergeser saat dialog terbuka.
+   <dialog> modal membuat halaman inert untuk interaksi, tetapi tidak
+   mengunci gulirnya; tanpa aturan ini roda tetikus masih menggeser latar. */
+html:has(dialog[open]) {
+  overflow: hidden;
+}
+
+/* Latar gelap modal ikut mengendur, masuk dan keluar. */
+dialog::backdrop {
+  animation: joyops-latar-masuk var(--dur-panel) cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+dialog.panel-keluar::backdrop {
+  animation: joyops-latar-keluar var(--dur-keluar) cubic-bezier(0.4, 0, 0.6, 1) both;
+}
+
+/* --------------------------------------------------------------------------
+   /* Dropdown profil: muncul dari atas dengan skala kecil ke penuh, hilang dengan
+      skala mengecil, kurvanya sama dengan modal dan toast supaya terasa satu
+      bahasa gerak. */
+   @keyframes joyops-menu-masuk {
+     from {
+       opacity: 0;
+       transform: scale(0.96) translateY(-6px);
+     }
+     to {
+       opacity: 1;
+       transform: scale(1) translateY(0);
+     }
+   }
+
+   @keyframes joyops-menu-keluar {
+     from {
+       opacity: 1;
+       transform: scale(1) translateY(0);
+     }
+     to {
+       opacity: 0;
+       transform: scale(0.97) translateY(-3px);
+     }
+   }
+
+   .menu-masuk {
+     transform-origin: top right;
+     animation: joyops-menu-masuk var(--dur-panel) cubic-bezier(0.16, 1, 0.3, 1) both;
+   }
+
+   .menu-keluar {
+     transform-origin: top right;
+     animation: joyops-menu-keluar var(--dur-keluar) cubic-bezier(0.4, 0, 0.6, 1) both;
+   }
+
+   /* Toast sebagai banner atas. Masuk turun dari atas, keluar naik ke atas.
+   Kurva sama dengan panel supaya seluruh gerak aplikasi satu keluarga.
+   -------------------------------------------------------------------------- */
+
+@keyframes joyops-toast-masuk {
+  from {
+    opacity: 0;
+    transform: scale(0.96) translateY(-14px);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
+@keyframes joyops-toast-keluar {
+  from {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+  to {
+    opacity: 0;
+    transform: scale(0.97) translateY(-10px);
+  }
+}
+
+.toast-masuk {
+  animation: joyops-toast-masuk var(--dur-panel) cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+.toast-keluar {
+  animation: joyops-toast-keluar var(--dur-keluar) cubic-bezier(0.4, 0, 0.6, 1) both;
 }
 
 @media (prefers-reduced-motion: reduce) {
   .gerak-muncul,
-  .gerak-naik,
-  .gerak-pop {
+  .panel-masuk,
+  .panel-keluar,
+  .menu-masuk,
+  .menu-keluar,
+  .toast-masuk,
+  .toast-keluar,
+  dialog::backdrop {
     animation: none;
   }
 
@@ -235,8 +386,13 @@
    Beberapa penyesuaian kecil yang tidak layak jadi token
    ========================================================================== */
 
-/* Tombol dan tautan tidak memakai transisi "all". Properti disebut eksplisit. */
+/* Tombol dan tautan tidak memakai transisi "all". Properti disebut eksplisit.
+   `cursor: pointer` ditulis eksplisit karena reset Tailwind mengaturnya jadi
+   default, dan di beberapa peramban tombol tanpa itu tidak terbaca bisa diklik.
+   Scale saat hover sengaja sangat kecil (1.02): cukup terasa, tidak bergeser
+   tata letak karena hanya transform yang berubah. */
 .joyops-aksi {
+  cursor: pointer;
   transition:
     background-color var(--dur-cepat) cubic-bezier(0, 0, 0.2, 1),
     border-color var(--dur-cepat) cubic-bezier(0, 0, 0.2, 1),
@@ -245,8 +401,20 @@
     opacity var(--dur-cepat) cubic-bezier(0, 0, 0.2, 1);
 }
 
+.joyops-aksi:hover:not(:disabled) {
+  transform: scale(1.02);
+}
+
 .joyops-aksi:active:not(:disabled) {
   transform: scale(0.96);
+  transition-duration: 60ms;
+}
+
+/* Nonaktif: kursor berubah jadi "tidak boleh diklik". Transform sengaja
+   dibiarkan apa adanya supaya tombol mati tidak melompat; hanya kursor yang
+   berubah. */
+.joyops-aksi:disabled {
+  cursor: not-allowed;
 }
 
 /* Garis pemisah tabel yang tenang */

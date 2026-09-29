@@ -68,20 +68,6 @@ export async function ringkasKas(
   };
 }
 
-export async function ambilTransaksiOrder(
-  supabase: KlienSupabase,
-  orderId: number
-): Promise<Transaksi | null> {
-  const { data } = await supabase
-    .from("transactions")
-    .select(KOLOM_TRANSAKSI)
-    .eq("order_id", orderId)
-    .maybeSingle()
-    .returns<Transaksi | null>();
-
-  return data ?? null;
-}
-
 export async function buatTransaksi(
   supabase: KlienSupabase,
   masukan: TransaksiBaru & { created_by: string }

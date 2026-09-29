@@ -10,8 +10,13 @@ import { tandaiDibaca, tandaiSemuaDibaca } from "@/models/notification.model";
 /** Tandai satu notifikasi dibaca. RLS memastikan hanya milik sendiri. */
 export const tandaiDibacaAction: AksiForm<null> = async (_sebelumnya, data) => {
   const cek = skemaTandaiNotif.safeParse({ id: teks(data, "id") });
-  if (!cek.success || !cek.data.id) {
+  if (!cek.success) {
     return gagal("Notifikasi tidak valid.", pesanPerField(cek.error));
+  }
+  // Terpisah dari pemeriksaan di atas supaya penyempitan tipe `cek.error`
+  // tetap berlaku.
+  if (!cek.data.id) {
+    return gagal("Notifikasi tidak valid.");
   }
 
   const supabase = await buatKlienServer();

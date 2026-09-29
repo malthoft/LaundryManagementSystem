@@ -40,3 +40,14 @@ yarn-error.log*
 # cadangan lokal
 *.zip
 *.bak
+
+# dokumentasi & berkas skripsi/spesifikasi (dilarang di-push)
+docs/
+
+# python & docx/puml generator
+__pycache__/
+*.pyc
+.venv*/
+scripts/generate_complete_docx.py
+scripts/render_puml.py
+

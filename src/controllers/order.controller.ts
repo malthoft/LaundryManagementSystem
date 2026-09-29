@@ -122,6 +122,15 @@ export const buatOrderBaru: AksiForm<{ kode: string }> = async (
     });
   }
 
+  // Satuan pcs dihitung per barang, jadi pecahan tidak masuk akal. kg boleh
+  // pecahan (mis. 2,5 kg), jadi yang diperiksa adalah unit layanan, bukan
+  // qty-nya secara mutlak.
+  if (layanan.unit === "pcs" && !Number.isInteger(isian.qty)) {
+    return gagal("Jumlah pcs harus bilangan bulat.", {
+      qty: `Jumlah untuk layanan ${layanan.service_name} harus bulat`,
+    });
+  }
+
   let kode = "";
   let orderId = 0;
 

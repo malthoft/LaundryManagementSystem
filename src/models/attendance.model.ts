@@ -66,25 +66,25 @@ export async function absenMasuk(
   supabase: KlienSupabase,
   shiftId?: number
 ): Promise<Absensi> {
-  const { data, error } = await supabase
-    .rpc("absen_masuk", { p_shift_id: shiftId ?? null })
-    .returns<Absensi | Absensi[]>();
+  const { data, error } = await supabase.rpc("absen_masuk", {
+    p_shift_id: shiftId ?? null,
+  });
 
   if (error) throw new Error(error.message);
 
-  const baris = Array.isArray(data) ? data[0] : data;
+  // PostgREST mengirim satu baris fungsi sebagai objek. Bentuk array tetap
+  // diterima supaya tidak pecah kalau balasannya berubah.
+  const baris = (Array.isArray(data) ? data[0] : data) as Absensi | undefined;
   if (!baris) throw new Error("Absen masuk gagal disimpan");
   return baris;
 }
 
 export async function absenKeluar(supabase: KlienSupabase): Promise<Absensi> {
-  const { data, error } = await supabase
-    .rpc("absen_keluar")
-    .returns<Absensi | Absensi[]>();
+  const { data, error } = await supabase.rpc("absen_keluar");
 
   if (error) throw new Error(error.message);
 
-  const baris = Array.isArray(data) ? data[0] : data;
+  const baris = (Array.isArray(data) ? data[0] : data) as Absensi | undefined;
   if (!baris) throw new Error("Absen keluar gagal disimpan");
   return baris;
 }

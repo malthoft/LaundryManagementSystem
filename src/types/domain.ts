@@ -4,7 +4,6 @@ import type {
   Order,
   OrderAddon,
   PengajuanTukar,
-  Profil,
   Shift,
   StatusMesin,
 } from "./db";

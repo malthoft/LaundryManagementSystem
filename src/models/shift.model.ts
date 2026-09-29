@@ -1,5 +1,5 @@
 import type { KlienSupabase } from "@/lib/supabase/server";
-import type { HariKerja, Shift, StatusShift, TemplateShift, TipeShift } from "@/types/db";
+import type { HariKerja, Shift, TemplateShift, TipeShift } from "@/types/db";
 import type { PengajuanTukarLengkap, ShiftLengkap } from "@/types/domain";
 
 export const KOLOM_SHIFT =
@@ -105,15 +105,6 @@ export async function buatShift(
   }
 ): Promise<void> {
   const { error } = await supabase.from("shifts").insert(masukan);
-  if (error) throw new Error(error.message);
-}
-
-export async function ubahStatusShift(
-  supabase: KlienSupabase,
-  id: number,
-  status: StatusShift
-): Promise<void> {
-  const { error } = await supabase.from("shifts").update({ status }).eq("id", id);
   if (error) throw new Error(error.message);
 }
 

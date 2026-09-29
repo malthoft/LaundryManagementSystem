@@ -4,7 +4,7 @@ import { revalidatePath } from "next/cache";
 import { buatKlienServer } from "@/lib/supabase/server";
 import { profilSaya } from "@/lib/auth";
 import { catatKegagalan, teks, type AksiForm } from "@/lib/aksi";
-import { pesanPerField, skemaAddon, skemaIdUmum, skemaLayanan } from "@/lib/validation";
+import { pesanPerField, centangForm, skemaAddon, skemaIdUmum, skemaLayanan } from "@/lib/validation";
 import { berhasil, gagal } from "@/types/domain";
 import {
   addonDipakaiOrder,
@@ -42,7 +42,7 @@ export const simpanLayananAction: AksiForm<null> = async (_sebelumnya, data) => 
     satuan: teks(data, "satuan"),
     durasi: teks(data, "durasi"),
     ikon: teks(data, "ikon") || "local_laundry_service",
-    aktif: teks(data, "aktif") !== "off",
+    aktif: centangForm(data, "aktif"),
   });
 
   if (!cek.success) {
@@ -115,7 +115,7 @@ export const simpanAddonAction: AksiForm<null> = async (_sebelumnya, data) => {
     nama: teks(data, "nama"),
     harga: teks(data, "harga"),
     ikon: teks(data, "ikon") || "add_circle",
-    aktif: teks(data, "aktif") !== "off",
+    aktif: centangForm(data, "aktif"),
   });
 
   if (!cek.success) {

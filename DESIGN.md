@@ -14,6 +14,11 @@ Konsekuensinya, sebagian besar aturan "landing page" di skill desain tidak
 relevan di sini (hero, logo bar, pricing, testimonial). Yang relevan dan wajib:
 hierarki, keadaan UI lengkap, kontras, keyboard, dan disiplin mikrointeraksi.
 
+## Design Read
+
+> Dibaca sebagai: aplikasi operasional untuk pemilik dan karyawan laundry, dengan
+> bahasa visual utilitarian-teknis yang tenang, dial ENERGY 1 / RHYTHM 2 / MOTION 2.
+
 ## Dial
 
 ```
@@ -87,13 +92,39 @@ sebagai hiasan; label kecil hanya untuk nama kolom tabel dan eyebrow sidebar.
 - Elevasi: bayangan tipis hanya untuk elemen yang memang mengambang (modal,
   dropdown, toast). Kartu di grid pakai garis, bukan bayangan.
 
+### Navigasi dan hierarki dashboard
+
+- Sidebar dibagi dua kelompok, berlabel: **Operasional** (dashboard, order,
+  mesin, absensi, shift) dan **Kendali** (layanan, keuangan, karyawan).
+  Staf lapangan tidak perlu menggulir melewati menu manajerial untuk
+  mencapai absensi. Definisi tunggal ada di `KELOMPOK_MENU` dan `navUntuk()`
+  pada `src/lib/constants.ts`.
+- **"Order baru" hanya ada di dashboard**, sebagai Quick Action Card yang
+  mengisi lebar di atas metrik, dan tidak lagi di sidebar. Satu tempat,
+  satu aksi, tanpa redundansi. Tautannya ke `/orders?aksi=baru` supaya
+  dashboard tidak perlu menarik data mesin, layanan, dan add-on hanya untuk
+  menyiapkan modal yang belum tentu dibuka.
+- Kartu **"Alur hari ini"** (Diterima / Dicuci / Selesai / Transaksi)
+  mengikuti urutan kerja kasir, dibaca dari kiri ke kanan. Anganya dihitung
+  di server dan diteruskan apa adanya.
+- Pemisahan kelompok ini berlaku untuk Admin dan Karyawan; item berlabel
+  `hanya` disaring sesuai peran seperti sebelumnya.
+
 ## Motion
 
-Tiga primitif saja: `fade-in` untuk kemunculan panel, `slide-up-sm` untuk
-modal dan toast, `count-pop` sekali saat nominal order berubah. Durasi 120-220ms,
-easing `--ease-out` untuk masuk dan `--ease-in-out` untuk perubahan state.
-`prefers-reduced-motion: reduce` mematikan ketiganya. Transisi pakai
+Primitif gerak (dokumentasi mengikuti kode, bukan sebaliknya):
+`gerak-muncul` untuk kehadiran umum; `panel-masuk`/`panel-keluar` untuk
+modal; `menu-masuk`/`menu-keluar` untuk dropdown; `toast-masuk`/`toast-keluar`
+untuk banner notifikasi. Durasi: masuk 260ms (`--dur-panel`), keluar 160ms
+(`--dur-keluar`). Kurvanya mengendur (masuk `cubic-bezier(0.16, 1, 0.3, 1)`,
+keluar `cubic-bezier(0.4, 0, 0.6, 1)`), bukan linear.
+`prefers-reduced-motion: reduce` mematikan semuanya. Transisi pakai
 `transform` dan `opacity`, tidak pernah `transition: all`.
+
+Tombol dan tautan interaktif memakai kelas `joyops-aksi`: `cursor: pointer`,
+hover `scale(1.02)`, tekan `scale(0.96)` dengan durasi 60ms supaya terasa
+responsif, dan `cursor: not-allowed` saat nonaktif. Hanya `transform` yang
+berubah, jadi tidak ada layout shift.
 
 ## Keadaan UI yang wajib ada di tiap layar data
 
@@ -107,6 +138,33 @@ Kontras minimal 4.5:1 untuk teks normal. Semua kontrol bisa dijangkau Tab
 dengan urutan visual, `:focus-visible` selalu terlihat (ring 2px, kontras >= 3:1)
 dan tidak pernah dianimasikan. Modal bisa ditutup dengan `Escape` dan fokus
 kembali ke pemicunya. Target sentuh minimal 44px di mobile.
+
+## Mengapa ikon ini dan bukan yang lain
+
+Ikon diambil dari Material Symbols karena namanya semantik dan sudah menyebut
+fungsinya: `local_laundry_service` untuk mesin, `point_of_sale` untuk kasir,
+`event_note` untuk jadwal, `badge` untuk absensi, `leaderboard` untuk keuangan.
+Ikon generik seperti percikan, bintang, atau robot tidak dipakai karena tidak
+berhubungan dengan pekerjaan laundry.
+
+Label kecil seperti "Aturan", "Masalah", dan "Catatan" dipakai untuk menandai
+jenis isi, bukan hiasan, dan hanya muncul di halaman Panduan serta catatan kaki
+tabel. Semuanya memakai huruf besar-kecil biasa. Huruf besar semua hanya
+tersisa di kepala tabel, karena itu konvensi yang sudah dipahami pembaca tabel.
+
+Panah (`chevron_right`, `arrow_right`) hanya muncul di dua tempat: penanda arah
+pada baris daftar yang memang bisa dibuka, dan penomoran langkah di halaman
+Panduan. Keduanya menunjukkan arah, bukan hiasan. Tidak ada tombol yang diberi
+panah hanya supaya terlihat ramai.
+
+## Bagaimana kontras dijaga
+
+Semua pasangan warna teks terhadap latarnya diperiksa mesin, bukan hanya
+diperkirakan: `npm run cek:kontras`. Skrip itu membaca token langsung dari
+`src/app/globals.css` untuk mode terang dan gelap, lalu menghitung rasio
+kontras. Ambangnya WCAG AA, 4.5:1 untuk teks normal dan 3:1 untuk cincin fokus.
+Skrip keluar dengan kode 1 bila ada yang gagal, jadi bisa dipakai sebagai
+pemeriksaan sebelum kirim.
 
 ## Yang dilarang di JoyOps
 

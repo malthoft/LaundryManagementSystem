@@ -10,33 +10,55 @@ import type {
   TipeShift,
 } from "@/types/db";
 
-/** Satu item menu sidebar. */
+/**
+ * Menu sidebar. Hanya berisi rute yang benar-benar ada, supaya tidak ada
+ * tautan yang menuju halaman kosong.
+ *
+ * `kelompok` menentukan baris mana yang diisinya. Operasional lapangan di atas,
+ * kendali (keuangan, karyawan) di bawah, supaya staf tidak perlu menggulir
+ * melewati menu manajerial untuk mencapai absensi.
+ */
 export interface ItemNav {
   href: string;
   label: string;
   ikon: string;
-  /** Kalau true, item hanya muncul untuk peran yang disebut. */
+  /** Kalau diisi, item hanya muncul untuk peran yang disebut. */
   hanya?: Peran;
+  kelompok: KunciKelompokMenu;
 }
 
-/**
- * Menu sidebar. Hanya berisi rute yang benar-benar ada, supaya tidak ada
- * tautan yang menuju halaman kosong.
- */
+export type KunciKelompokMenu = "lapangan" | "kendali";
+
 const SEMUA_MENU: ItemNav[] = [
-  { href: "/dashboard", label: "Dashboard", ikon: "dashboard" },
-  { href: "/orders", label: "Order & Pembayaran", ikon: "point_of_sale" },
-  { href: "/machines", label: "Mesin", ikon: "local_laundry_service" },
-  { href: "/shifts", label: "Jadwal Shift", ikon: "event_note", hanya: "Admin" },
-  { href: "/my-shift", label: "Shift Saya", ikon: "event_note", hanya: "Karyawan" },
-  { href: "/attendance", label: "Absensi", ikon: "badge" },
-  { href: "/services", label: "Layanan & Add-on", ikon: "payments" },
-  { href: "/finance", label: "Keuangan", ikon: "leaderboard", hanya: "Admin" },
-  { href: "/employees", label: "Karyawan", ikon: "group", hanya: "Admin" },
+  // Kelompok lapangan: dipakai staf setiap shift.
+  { href: "/dashboard", label: "Dashboard", ikon: "dashboard", kelompok: "lapangan" },
+  { href: "/orders", label: "Order & Pembayaran", ikon: "point_of_sale", kelompok: "lapangan" },
+  { href: "/machines", label: "Mesin", ikon: "local_laundry_service", kelompok: "lapangan" },
+  { href: "/attendance", label: "Absensi", ikon: "badge", kelompok: "lapangan" },
+  { href: "/shifts", label: "Jadwal Shift", ikon: "event_note", hanya: "Admin", kelompok: "lapangan" },
+  { href: "/my-shift", label: "Shift Saya", ikon: "event_note", hanya: "Karyawan", kelompok: "lapangan" },
+
+  // Kelompok kendali: mengelihat seluruh usaha, bukan tugas harian.
+  { href: "/services", label: "Layanan & Add-on", ikon: "payments", kelompok: "kendali" },
+  { href: "/finance", label: "Keuangan", ikon: "leaderboard", hanya: "Admin", kelompok: "kendali" },
+  { href: "/employees", label: "Karyawan", ikon: "group", hanya: "Admin", kelompok: "kendali" },
 ];
 
-export function navUntuk(peran: Peran): ItemNav[] {
-  return SEMUA_MENU.filter((item) => !item.hanya || item.hanya === peran);
+/** Judul yang tampil di atas tiap kelompok menu. */
+export const KELOMPOK_MENU: { kunci: KunciKelompokMenu; judul: string }[] = [
+  { kunci: "lapangan", judul: "Operasional" },
+  { kunci: "kendali", judul: "Kendali" },
+];
+
+/**
+ * Menu untuk satu kelompok dan satu peran. Kalau kunci tidak diberi, semua
+ * item yang boleh dilihat peran tersebut dikembalikan (dipakai Pengaturan).
+ */
+export function navUntuk(peran: Peran, kunci?: KunciKelompokMenu): ItemNav[] {
+  return SEMUA_MENU.filter(
+    (item) =>
+      (!item.hanya || item.hanya === peran) && (!kunci || item.kelompok === kunci)
+  );
 }
 
 /** Label Bahasa Indonesia untuk nilai enum database. */
@@ -121,12 +143,49 @@ export const NADA_ORDER: Record<StatusOrder, NadaStatus> = {
   Dibatalkan: { soft: "bg-danger-soft", kuat: "text-danger", ikon: "cancel" },
 };
 
+export const NADA_SHIFT: Record<StatusShift, NadaStatus> = {
+  Scheduled: { soft: "bg-primary-soft", kuat: "text-primary", ikon: "schedule" },
+  "Clocked In": { soft: "bg-ok-soft", kuat: "text-ok", ikon: "login" },
+  Completed: { soft: "bg-ok-soft", kuat: "text-ok", ikon: "check_circle" },
+};
+
+export const NADA_ABSEN: Record<StatusAbsen, NadaStatus> = {
+  Pending: { soft: "bg-busy-soft", kuat: "text-busy", ikon: "hourglass_top" },
+  Approved: { soft: "bg-ok-soft", kuat: "text-ok", ikon: "check_circle" },
+  Rejected: { soft: "bg-danger-soft", kuat: "text-danger", ikon: "cancel" },
+};
+
+export const NADA_TUKAR: Record<StatusTukar, NadaStatus> = {
+  Pending: { soft: "bg-busy-soft", kuat: "text-busy", ikon: "hourglass_top" },
+  "Accepted by Employee": { soft: "bg-primary-soft", kuat: "text-primary", ikon: "approval" },
+  "Rejected by Employee": { soft: "bg-danger-soft", kuat: "text-danger", ikon: "cancel" },
+  Approved: { soft: "bg-ok-soft", kuat: "text-ok", ikon: "check_circle" },
+  "Rejected by Admin": { soft: "bg-danger-soft", kuat: "text-danger", ikon: "cancel" },
+};
+
+/** Dipakai untuk kolom aktif/nonaktif pada layanan, add-on, dan akun karyawan. */
+export const NADA_AKTIF: Record<"aktif" | "nonaktif", NadaStatus> = {
+  aktif: { soft: "bg-ok-soft", kuat: "text-ok", ikon: "check_circle" },
+  nonaktif: { soft: "bg-line", kuat: "text-ink-muted", ikon: "block" },
+};
+
 export const NADA_NOTIF: Record<TipeNotifikasi, NadaStatus> = {
   info: { soft: "bg-primary-soft", kuat: "text-primary", ikon: "info" },
   success: { soft: "bg-ok-soft", kuat: "text-ok", ikon: "check_circle" },
   warning: { soft: "bg-busy-soft", kuat: "text-busy", ikon: "warning" },
   error: { soft: "bg-danger-soft", kuat: "text-danger", ikon: "error" },
 };
+
+/**
+ * Warna bilah peramban. Nilainya literal karena metadata Next.js tidak bisa
+ * membaca token CSS pada saat itu. Nilainya sama dengan token --color-paper di
+ * globals.css untuk mode terang dan gelap, supaya bilah peramban menyatu
+ * dengan halaman.
+ */
+export const WARNA_BILAH_PERAMBAN = {
+  terang: "#f5f7f8",
+  gelap: "#131a1c",
+} as const;
 
 /** Stasiun kerja yang biasa dipakai. Bebas diketik juga. */
 export const STASIUN_UMUM = ["Kasir", "Cuci", "Pengeringan", "Setrika", "Packing"];

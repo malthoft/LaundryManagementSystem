@@ -25,9 +25,9 @@
 -- ---------------------------------------------------------------------------
 with akun(email, username, nama, peran, sandi) as (
   values
-    ('althof123@joyops.local', 'althof123', 'Althof Taqiyyuddin', 'Admin',    'JoyOps#2026'),
-    ('damar@joyops.local',     'damar',     'Damar Galih',       'Karyawan', 'JoyOps#2026'),
-    ('adnan@joyops.local',     'adnan',     'Adnan Amhar',       'Karyawan', 'JoyOps#2026')
+    ('admin@joyops.local',     'admin',     'Administrator', 'Admin',    'JoyOps#2026'),
+    ('operator1@joyops.local', 'operator1', 'Operator Satu', 'Karyawan', 'JoyOps#2026'),
+    ('operator2@joyops.local', 'operator2', 'Operator Dua',  'Karyawan', 'JoyOps#2026')
 )
 insert into auth.users (
   instance_id, id, aud, role, email, encrypted_password,

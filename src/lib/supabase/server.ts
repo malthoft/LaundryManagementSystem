@@ -1,4 +1,4 @@
-import { createServerClient } from "@supabase/ssr";
+import { createServerClient, type CookieOptions } from "@supabase/ssr";
 import { cookies } from "next/headers";
 
 /**
@@ -21,7 +21,7 @@ export async function buatKlienServer() {
       getAll() {
         return penyimpanan.getAll();
       },
-      setAll(daftar) {
+      setAll(daftar: { name: string; value: string; options: CookieOptions }[]) {
         try {
           for (const { name, value, options } of daftar) {
             penyimpanan.set(name, value, options);
@@ -36,3 +36,13 @@ export async function buatKlienServer() {
 }
 
 export type KlienSupabase = Awaited<ReturnType<typeof buatKlienServer>>;
+
+/**
+ * Apakah variabel lingkungan Supabase sudah terisi. Dipakai lapisan tampilan
+ * untuk menampilkan petunjuk penyiapan, bukan layar kosong, saat belum diisi.
+ */
+export function sambunganSiap(): boolean {
+  return Boolean(
+    process.env.NEXT_PUBLIC_SUPABASE_URL && process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+  );
+}

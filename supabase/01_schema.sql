@@ -767,10 +767,16 @@ alter table public.attendance           enable row level security;
 alter table public.notifications        enable row level security;
 
 -- 6.1 profiles
+-- Baca: seluruh karyawan yang sudah masuk boleh melihat daftar rekan kerjanya.
+-- Alasannya: daftar ini dipakai di layar kerja, yaitu kolom Kasir pada tabel
+-- order dan nama rekan pada pengajuan tukar shift. Isi tabel ini hanya
+-- identitas kerja (nama, username, peran, status aktif), tidak ada bahan
+-- rahasia. Sandi ada di auth.users, bukan di sini.
+-- Tulis: tetap hanya Admin, jadi peran tidak bisa dinaikkan sendiri.
 drop policy if exists profiles_baca on public.profiles;
 create policy profiles_baca on public.profiles
   for select to authenticated
-  using (id = auth.uid() or public.adminkah());
+  using (true);
 
 drop policy if exists profiles_tulis_admin on public.profiles;
 create policy profiles_tulis_admin on public.profiles

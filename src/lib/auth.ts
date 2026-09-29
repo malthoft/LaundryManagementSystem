@@ -1,6 +1,6 @@
 import { cache } from "react";
 import { redirect } from "next/navigation";
-import { buatKlienServer } from "@/lib/supabase/server";
+import { buatKlienServer, sambunganSiap } from "@/lib/supabase/server";
 import type { Profil } from "@/types/db";
 
 const KOLOM_PROFIL =
@@ -11,6 +11,11 @@ const KOLOM_PROFIL =
  * tidak memanggil jaringan berkali-kali dalam satu render.
  */
 export const penggunaSaya = cache(async () => {
+  /* Tanpa variabel lingkungan, tidak ada sesi yang bisa dibaca. Mengembalikan
+     null lebih baik daripada melempar, supaya halaman tidak menumpuk galat
+     dan pengguna diarahkan ke halaman masuk. */
+  if (!sambunganSiap()) return null;
+
   const supabase = await buatKlienServer();
   const {
     data: { user },

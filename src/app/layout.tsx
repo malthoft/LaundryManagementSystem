@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import { Inter, Manrope } from "next/font/google";
+import { WARNA_BILAH_PERAMBAN } from "@/lib/constants";
 import "./globals.css";
 
 const manrope = Manrope({
@@ -29,8 +30,8 @@ export const viewport: Viewport = {
   width: "device-width",
   initialScale: 1,
   themeColor: [
-    { media: "(prefers-color-scheme: light)", color: "#f5f7f8" },
-    { media: "(prefers-color-scheme: dark)", color: "#131a1c" },
+    { media: "(prefers-color-scheme: light)", color: WARNA_BILAH_PERAMBAN.terang },
+    { media: "(prefers-color-scheme: dark)", color: WARNA_BILAH_PERAMBAN.gelap },
   ],
 };
 
@@ -50,6 +51,10 @@ export default function RootLayout({
       <head>
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
+        {/* Font ikon Material Symbols punya poros opsz, wght, FILL, dan GRAD yang
+            belum bisa dimuat lewat next/font. Karena itu dimuat sebagai <link>,
+            dan dua aturan lint font sengaja dimatikan hanya di baris ini. */}
+        {/* eslint-disable-next-line @next/next/google-font-display, @next/next/no-page-custom-font */}
         <link
           rel="stylesheet"
           href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200&display=block"

@@ -1,5 +1,5 @@
 import type { KlienSupabase } from "@/lib/supabase/server";
-import type { MetodeBayar, Order, StatusOrder } from "@/types/db";
+import type { MetodeBayar, Order } from "@/types/db";
 import type { OrderLengkap } from "@/types/domain";
 
 /**
@@ -27,23 +27,6 @@ export interface OrderBaru {
   addonIds: number[];
   metodeBayar: MetodeBayar;
   catatan?: string;
-}
-
-/** Order terbaru lebih dulu. `status` kosong berarti semua status. */
-export async function ambilOrder(
-  supabase: KlienSupabase,
-  opsi: { status?: StatusOrder; batas?: number } = {}
-): Promise<OrderLengkap[]> {
-  let kueri = supabase
-    .from("orders")
-    .select(SELEKSI_ORDER)
-    .order("created_at", { ascending: false })
-    .limit(opsi.batas ?? 100);
-
-  if (opsi.status) kueri = kueri.eq("status", opsi.status);
-
-  const { data } = await kueri.returns<OrderLengkap[]>();
-  return data ?? [];
 }
 
 export async function ambilOrderById(
@@ -85,22 +68,20 @@ export async function buatOrder(
   supabase: KlienSupabase,
   masukan: OrderBaru
 ): Promise<Order> {
-  const { data, error } = await supabase
-    .rpc("buat_order", {
-      p_washer_id: masukan.washerId,
-      p_dryer_id: masukan.dryerId,
-      p_service_id: masukan.serviceId,
-      p_customer_name: masukan.namaPelanggan,
-      p_qty: masukan.qty,
-      p_addon_ids: masukan.addonIds,
-      p_payment_method: masukan.metodeBayar,
-      p_notes: masukan.catatan ?? null,
-    })
-    .returns<Order | Order[]>();
+  const { data, error } = await supabase.rpc("buat_order", {
+    p_washer_id: masukan.washerId,
+    p_dryer_id: masukan.dryerId,
+    p_service_id: masukan.serviceId,
+    p_customer_name: masukan.namaPelanggan,
+    p_qty: masukan.qty,
+    p_addon_ids: masukan.addonIds,
+    p_payment_method: masukan.metodeBayar,
+    p_notes: masukan.catatan ?? null,
+  });
 
   if (error) throw new Error(error.message);
 
-  const order = Array.isArray(data) ? data[0] : data;
+  const order = (Array.isArray(data) ? data[0] : data) as Order | undefined;
   if (!order) throw new Error("Order gagal dibuat");
   return order;
 }

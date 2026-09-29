@@ -1,4 +1,4 @@
-import { createServerClient } from "@supabase/ssr";
+import { createServerClient, type CookieOptions } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
 
 /**
@@ -23,7 +23,7 @@ export async function segarkanSesi(permintaan: NextRequest) {
       getAll() {
         return permintaan.cookies.getAll();
       },
-      setAll(daftar) {
+      setAll(daftar: { name: string; value: string; options: CookieOptions }[]) {
         for (const { name, value } of daftar) {
           permintaan.cookies.set(name, value);
         }
