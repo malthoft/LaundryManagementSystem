@@ -50,4 +50,10 @@ __pycache__/
 .venv*/
 scripts/generate_complete_docx.py
 scripts/render_puml.py
+scripts/fill_test_plan.py
+scripts/all_pages_text.txt
+scripts/pdf_extracted.json
+scripts/extracted_images/
+scripts/*.pdf
+scripts/*.docx
 
