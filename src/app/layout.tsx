@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import { Inter, Manrope } from "next/font/google";
 import { WARNA_BILAH_PERAMBAN } from "@/lib/constants";
+import Script from "next/script";
 import "./globals.css";
 
 const manrope = Manrope({
@@ -51,9 +52,7 @@ export default function RootLayout({
       <head>
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
-        {/* Font ikon Material Symbols punya poros opsz, wght, FILL, dan GRAD yang
-            belum bisa dimuat lewat next/font. Karena itu dimuat sebagai <link>,
-            dan dua aturan lint font sengaja dimatikan hanya di baris ini. */}
+        {/* Font ikon Material Symbols dan Ionicons (https://ionic.io/ionicons) */}
         {/* eslint-disable-next-line @next/next/google-font-display, @next/next/no-page-custom-font */}
         <link
           rel="stylesheet"
@@ -61,7 +60,19 @@ export default function RootLayout({
         />
         <script dangerouslySetInnerHTML={{ __html: skripTema }} />
       </head>
-      <body>{children}</body>
+      <body>
+        {children}
+        <Script
+          type="module"
+          src="https://unpkg.com/ionicons@7.1.0/dist/ionicons/ionicons.esm.js"
+          strategy="lazyOnload"
+        />
+        <Script
+          noModule
+          src="https://unpkg.com/ionicons@7.1.0/dist/ionicons/ionicons.js"
+          strategy="lazyOnload"
+        />
+      </body>
     </html>
   );
 }

@@ -5,7 +5,7 @@ const nextConfig: NextConfig = {
   // Halaman operasional tidak boleh di-cache: angka uang dan status mesin
   // harus selalu yang terbaru.
   experimental: {
-    staleTimes: { dynamic: 0, static: 0 },
+    staleTimes: { dynamic: 30, static: 180 },
   },
 };
 

@@ -55,6 +55,7 @@ export function OrderBaruModal({
           layanan={layanan}
           addon={addon}
           fokusAwal={sudahTerbuka && buka}
+          padaSukses={tutup}
         />
       </div>
     </Modal>

@@ -3,16 +3,8 @@ import { Kartu, IsiKartu } from "@/components/ui/Kartu";
 import { KeadaanGagal } from "@/components/ui/Keadaan";
 import { wajibMasuk } from "@/lib/auth";
 import { buatKlienServer, sambunganSiap } from "@/lib/supabase/server";
-import { ambilNotifikasi, jumlahBelumDibaca } from "@/models/notification.model";
+import { ambilNotifikasi, bersihkanNotifikasiKedaluwarsa, jumlahBelumDibaca } from "@/models/notification.model";
 import type { Notifikasi } from "@/types/db";
-
-/**
- * Penjaga sesi untuk seluruh halaman dalam aplikasi, sekaligus tempat
- * notifikasi diambil sekali untuk bilah atas.
- *
- * `children` dirender langsung di sini sebagai saudara rangka navigasi, bukan
- * sebagai anak komponen klien. Lihat catatan di RangkaNavigasi.
- */
 
 /*
  * Seluruh halaman di grup ini bergantung pada sesi pengguna, jadi wajib
@@ -40,12 +32,13 @@ export default async function LayoutAplikasi({
 
   try {
     const supabase = await buatKlienServer();
-    const hasil = await Promise.all([
+    const [notifData, jmlData] = await Promise.all([
       ambilNotifikasi(supabase, 15),
       jumlahBelumDibaca(supabase),
+      bersihkanNotifikasiKedaluwarsa(supabase),
     ]);
-    notifikasi = hasil[0];
-    jumlah = hasil[1];
+    notifikasi = notifData;
+    jumlah = jmlData;
   } catch (kesalahan) {
     console.error("[JoyOps] notifikasi gagal dimuat:", kesalahan);
   }

@@ -5,6 +5,7 @@ import { Sidebar } from "@/components/shell/Sidebar";
 import { LoncengNotifikasi } from "@/components/shell/LoncengNotifikasi";
 import { MenuProfil } from "@/components/shell/MenuProfil";
 import { SakelarTema } from "@/components/ui/SakelarTema";
+import { IonIcon } from "@/components/ui/IonIcon";
 import type { Notifikasi, Peran } from "@/types/db";
 
 /**
@@ -41,11 +42,9 @@ export function RangkaNavigasi({
             type="button"
             onClick={() => setMenuBuka(true)}
             aria-label="Buka navigasi"
-            className="joyops-aksi flex h-11 w-11 items-center justify-center rounded-sm text-ink-muted hover:bg-paper hover:text-ink md:hidden"
+            className="joyops-aksi flex h-11 w-11 items-center justify-center rounded-lg text-ink-muted hover:bg-paper hover:text-ink md:hidden"
           >
-            <span aria-hidden="true" className="material-symbols-outlined">
-              menu
-            </span>
+            <IonIcon name="menu-outline" size={24} />
           </button>
           <span className="font-display text-sedang font-extrabold tracking-tight text-primary md:hidden">
             JoyOps

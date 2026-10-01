@@ -31,17 +31,17 @@ export type KunciKelompokMenu = "lapangan" | "kendali";
 
 const SEMUA_MENU: ItemNav[] = [
   // Kelompok lapangan: dipakai staf setiap shift.
-  { href: "/dashboard", label: "Dashboard", ikon: "dashboard", kelompok: "lapangan" },
-  { href: "/orders", label: "Order & Pembayaran", ikon: "point_of_sale", kelompok: "lapangan" },
-  { href: "/machines", label: "Mesin", ikon: "local_laundry_service", kelompok: "lapangan" },
-  { href: "/attendance", label: "Absensi", ikon: "badge", kelompok: "lapangan" },
-  { href: "/shifts", label: "Jadwal Shift", ikon: "event_note", hanya: "Admin", kelompok: "lapangan" },
-  { href: "/my-shift", label: "Shift Saya", ikon: "event_note", hanya: "Karyawan", kelompok: "lapangan" },
+  { href: "/dashboard", label: "Dashboard", ikon: "grid-outline", kelompok: "lapangan" },
+  { href: "/orders", label: "Order & Kasir", ikon: "shirt-outline", kelompok: "lapangan" },
+  { href: "/machines", label: "Status Mesin", ikon: "hardware-chip-outline", kelompok: "lapangan" },
+  { href: "/attendance", label: "Absensi Staf", ikon: "person-circle-outline", kelompok: "lapangan" },
+  { href: "/shifts", label: "Jadwal Shift", ikon: "calendar-outline", hanya: "Admin", kelompok: "lapangan" },
+  { href: "/my-shift", label: "Shift Saya", ikon: "calendar-outline", hanya: "Karyawan", kelompok: "lapangan" },
 
-  // Kelompok kendali: mengelihat seluruh usaha, bukan tugas harian.
-  { href: "/services", label: "Layanan & Add-on", ikon: "payments", kelompok: "kendali" },
-  { href: "/finance", label: "Keuangan", ikon: "leaderboard", hanya: "Admin", kelompok: "kendali" },
-  { href: "/employees", label: "Karyawan", ikon: "group", hanya: "Admin", kelompok: "kendali" },
+  // Kelompok kendali: mengontrol operasional usaha, tarif, dan staf.
+  { href: "/services", label: "Katalog Layanan", ikon: "pricetag-outline", kelompok: "kendali" },
+  { href: "/finance", label: "Laporan Keuangan", ikon: "wallet-outline", hanya: "Admin", kelompok: "kendali" },
+  { href: "/employees", label: "Kelola Karyawan", ikon: "people-outline", hanya: "Admin", kelompok: "kendali" },
 ];
 
 /** Judul yang tampil di atas tiap kelompok menu. */

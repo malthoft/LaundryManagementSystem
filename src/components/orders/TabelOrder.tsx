@@ -95,8 +95,10 @@ export function TabelOrder({
                   />
                 ) : null}
 
-                {order.status !== "Berjalan" ? (
-                  <span className="text-kecil text-ink-muted">Selesai</span>
+                {order.status === "Selesai" ? (
+                  <span className="text-mikro font-medium text-ok">Cucian Selesai</span>
+                ) : order.status === "Dibatalkan" ? (
+                  <span className="text-mikro font-medium text-danger">Dibatalkan</span>
                 ) : null}
 
                 {/* Quick link: struk langsung dari baris, tanpa buka halaman lain. */}

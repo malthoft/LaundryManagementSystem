@@ -3,11 +3,12 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { navUntuk, KELOMPOK_MENU } from "@/lib/constants";
+import { IonIcon } from "@/components/ui/IonIcon";
 import type { Peran } from "@/types/db";
 
 /**
- * Navigasi utama. Satu-satunya tempat daftar menu ditulis, supaya tidak
- * terulang di tiap halaman seperti versi lama.
+ * Navigasi utama dengan ikon Ionicons, tautan ter-prefetch untuk navigasi cepat,
+ * dan tata letak operasional yang intuitif bagi staf dan pemilik toko.
  */
 export function Sidebar({
   peran,
@@ -26,7 +27,7 @@ export function Sidebar({
       <div
         aria-hidden="true"
         onClick={tutup}
-        className={`fixed inset-0 z-40 bg-ink/45 transition-opacity duration-200 md:hidden ${
+        className={`fixed inset-0 z-40 bg-ink/45 backdrop-blur-xs transition-opacity duration-200 md:hidden ${
           terbuka ? "opacity-100" : "pointer-events-none opacity-0"
         }`}
       />
@@ -37,38 +38,34 @@ export function Sidebar({
           terbuka ? "translate-x-0" : "-translate-x-full"
         }`}
       >
-        <div className="flex items-center justify-between gap-2 px-4 py-4">
-          <Link href="/dashboard" onClick={tutup} className="min-w-0">
-            <span className="block font-display text-xl font-extrabold leading-none tracking-tight text-primary">
+        <div className="flex items-center justify-between gap-2 px-4 py-4 border-b border-line/40">
+          <Link href="/dashboard" prefetch={true} onClick={tutup} className="min-w-0 group">
+            <span className="block font-display text-xl font-extrabold leading-none tracking-tight text-primary group-hover:text-primary-600 transition-colors">
               JoyOps
             </span>
             <span className="mt-1 block text-mikro font-medium text-ink-muted">
-              {peran === "Admin" ? "Portal Admin" : "Portal Karyawan"}
+              {peran === "Admin" ? "Portal Manajer / Pemilik" : "Portal Kasir / Operator"}
             </span>
           </Link>
           <button
             type="button"
             onClick={tutup}
             aria-label="Tutup navigasi"
-            className="joyops-aksi flex h-11 w-11 items-center justify-center rounded-sm text-ink-muted hover:bg-paper md:hidden"
+            className="joyops-aksi flex h-11 w-11 items-center justify-center rounded-lg text-ink-muted hover:bg-paper md:hidden"
           >
-            <span aria-hidden="true" className="material-symbols-outlined">
-              close
-            </span>
+            <IonIcon name="close-outline" size={22} />
           </button>
         </div>
 
-        {/* Menu dipisah dua kelompok: operasional lapangan, lalu kendali.
-            Pemisahan ini supaya staf lapangan tidak perlu menggulir melewati
-            menu keuangan dan pengaturan untuk mencapai "Absen". */}
-        <nav className="flex flex-1 flex-col gap-4 overflow-y-auto px-2 pb-4">
+        {/* Menu navigasi berkecepatan tinggi */}
+        <nav className="flex flex-1 flex-col gap-4 overflow-y-auto px-2 py-3">
           {KELOMPOK_MENU.map((kelompok) => {
             const isi = navUntuk(peran, kelompok.kunci);
             if (isi.length === 0) return null;
 
             return (
               <div key={kelompok.kunci} className="flex flex-col gap-0.5">
-                <p className="px-3 pb-1 pt-2 text-mikro font-bold uppercase tracking-wide text-ink-muted">
+                <p className="px-3 pb-1 pt-1.5 text-mikro font-bold uppercase tracking-wider text-ink-muted">
                   {kelompok.judul}
                 </p>
                 {isi.map((item) => {
@@ -79,21 +76,17 @@ export function Sidebar({
                     <Link
                       key={item.href}
                       href={item.href}
+                      prefetch={true}
                       onClick={tutup}
                       aria-current={aktif ? "page" : undefined}
-                      className={`joyops-aksi flex min-h-11 items-center gap-3 rounded-sm px-3 text-kecil ${
+                      className={`joyops-aksi flex min-h-11 items-center gap-3 rounded-lg px-3 text-kecil transition-colors ${
                         aktif
-                          ? "bg-surface font-bold text-primary"
+                          ? "bg-surface font-bold text-primary shadow-xs ring-1 ring-line/60"
                           : "font-medium text-ink-muted hover:bg-paper hover:text-ink"
                       }`}
                     >
-                      <span
-                        aria-hidden="true"
-                        className={`material-symbols-outlined text-[1.25em] ${
-                          aktif ? "ms-aktif" : ""
-                        }`}
-                      >
-                        {item.ikon}
+                      <span className={`shrink-0 transition-colors ${aktif ? "text-primary" : "text-ink-muted"}`}>
+                        <IonIcon name={item.ikon} size={18} />
                       </span>
                       <span className="min-w-0 truncate">{item.label}</span>
                     </Link>

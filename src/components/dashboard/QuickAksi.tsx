@@ -1,19 +1,17 @@
 "use client";
 
 import Link from "next/link";
+import { IonIcon } from "@/components/ui/IonIcon";
 
 /**
- * Alur kerja harian, dibaca dari atas ke bawah sesuai urutan kerja kasir:
- * terima cucian, cuci, selesai, pelunasan.
- *
- * Setiap tahap hanya menampilkan angka. Angka dihitung di server dan
- * diteruskan apa adanya, jadi komponen ini tidak menarik data sendiri.
+ * Alur kerja harian, dibaca dari kiri ke kanan sesuai urutan kerja kasir:
+ * terima cucian, cuci/keringkan, selesai, pelunasan.
  */
 const TAHAP = [
-  { kunci: "diterima", label: "Diterima", ikon: "shopping_bag", warna: "text-primary" },
-  { kunci: "dicuci", label: "Dicuci", ikon: "local_laundry_service", warna: "text-busy" },
-  { kunci: "selesai", label: "Selesai", ikon: "check_circle", warna: "text-ok" },
-  { kunci: "lunas", label: "Transaksi", ikon: "payments", warna: "text-ink" },
+  { kunci: "diterima", label: "Cucian Masuk", ikon: "shirt-outline", warna: "text-primary bg-primary/10" },
+  { kunci: "dicuci", label: "Sedang Dicuci", ikon: "hardware-chip-outline", warna: "text-busy bg-busy/10" },
+  { kunci: "selesai", label: "Cucian Selesai", ikon: "checkmark-circle", warna: "text-ok bg-ok/10" },
+  { kunci: "lunas", label: "Transaksi Kas", ikon: "wallet-outline", warna: "text-ink bg-paper" },
 ] as const;
 
 export function AlurKerja({
@@ -33,27 +31,29 @@ export function AlurKerja({
     <section aria-labelledby="judul-alur" className="flex flex-col gap-2.5">
       <h2
         id="judul-alur"
-        className="text-kecil font-bold uppercase tracking-wide text-ink-muted"
+        className="text-mikro font-bold uppercase tracking-wider text-ink-muted"
       >
-        Alur hari ini
+        Ringkasan Alur Operasional Hari Ini
       </h2>
-      <ol className="grid grid-cols-2 gap-2 sm:grid-cols-4">
+      <ol className="grid grid-cols-2 gap-2.5 sm:grid-cols-4">
         {TAHAP.map((tahap) => (
           <li
             key={tahap.kunci}
-            className="flex items-center gap-2.5 rounded-md border border-line bg-surface px-3 py-2.5"
+            className="flex items-center gap-3 rounded-xl border border-line bg-surface p-3 shadow-xs"
           >
             <span
               aria-hidden="true"
-              className={`material-symbols-outlined shrink-0 text-[1.25em] ${tahap.warna}`}
+              className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-lg ${tahap.warna}`}
             >
-              {tahap.ikon}
+              <IonIcon name={tahap.ikon} size={20} />
             </span>
             <span className="min-w-0">
-              <span className="angka block text-sedang font-extrabold text-ink">
+              <span className="angka block text-sedang font-extrabold text-ink leading-tight">
                 {jumlah[tahap.kunci]}
               </span>
-              <span className="block text-mikro text-ink-muted">{tahap.label}</span>
+              <span className="block text-mikro font-medium text-ink-muted truncate">
+                {tahap.label}
+              </span>
             </span>
           </li>
         ))}
@@ -63,58 +63,54 @@ export function AlurKerja({
 }
 
 /**
- * Kartu aksi utama dashboard. "Order baru" adalah aksi paling sering, jadi ia
- * dibuat menonjol dan hanya ada di sini, bukan di menu sidebar.
- *
- * Tautan ini menuju /orders?aksi=baru, tempat form order dengan datanya
- * sudah dimuat. Jadi dashboard tidak perlu menarik data mesin, layanan, dan
- * add-on hanya untuk menyiapkan modal yang belum tentu dibuka.
+ * Kartu aksi utama dashboard: "Buat Order Baru" dibuat menonjol dengan
+ * tombol cepat menuju timer cucian, mesin kosong, dan buku kas.
  */
 export function QuickAksi({ admin }: { admin: boolean }) {
   return (
     <div className="flex flex-col gap-3">
       <Link
         href="/orders?aksi=baru"
-        className="joyops-aksi flex flex-col items-start gap-3 rounded-lg border border-primary bg-primary-soft px-4 py-4 hover:border-primary-600 hover:bg-primary-soft/70 sm:flex-row sm:items-center sm:justify-between"
+        prefetch={true}
+        className="joyops-aksi group flex flex-col items-start gap-3 rounded-2xl border border-primary/40 bg-gradient-to-r from-primary-soft to-surface p-5 shadow-xs hover:border-primary hover:shadow-md transition-all sm:flex-row sm:items-center sm:justify-between"
       >
-        <span className="flex min-w-0 items-center gap-3">
+        <div className="flex min-w-0 items-center gap-3.5">
           <span
             aria-hidden="true"
-            className="material-symbols-outlined shrink-0 text-[1.75em] text-primary"
+            className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-primary text-primary-fg shadow-sm group-hover:scale-105 transition-transform"
           >
-            add_shopping_cart
+            <IonIcon name="shirt-outline" size={26} />
           </span>
-          <span className="min-w-0">
-            <span className="block text-sedang font-extrabold text-ink">
-              Order baru masuk
+          <div className="min-w-0">
+            <span className="block text-sedang font-extrabold text-ink group-hover:text-primary transition-colors">
+              Penerimaan Cucian Baru (Kasir)
             </span>
             <span className="block text-kecil text-ink-muted">
-              Catat cucian pelanggan, pilih mesin, hitung total, langsung simpan.
+              Pilih mesin cuci &amp; pengering tersedia, hitung tarif, dan periksa kwitansi.
             </span>
-          </span>
-        </span>
-        <span className="joyops-aksi inline-flex min-h-11 shrink-0 items-center gap-2 rounded-md bg-primary px-4 text-kecil font-bold text-primary-fg hover:bg-primary-600">
-          <span aria-hidden="true" className="material-symbols-outlined text-[1.15em]">
-            add
-          </span>
-          Buat order
+          </div>
+        </div>
+
+        <span className="joyops-aksi inline-flex min-h-11 shrink-0 items-center gap-2 rounded-xl bg-primary px-5 text-kecil font-bold text-primary-fg shadow-sm hover:bg-primary-600">
+          <IonIcon name="add-outline" size={18} />
+          <span>Buat Order Kasir</span>
         </span>
       </Link>
 
       <div className="flex flex-wrap gap-2">
-        <TautanCepat href="/orders#papan-timer" ikon="timer">
-          Cucian berjalan
+        <TautanCepat href="/orders#papan-timer" ikon="time-outline">
+          Timer Cucian Berjalan
         </TautanCepat>
-        <TautanCepat href="/machines" ikon="local_laundry_service">
-          Mesin kosong
+        <TautanCepat href="/machines" ikon="hardware-chip-outline">
+          Ketersediaan Unit Mesin
         </TautanCepat>
         {admin ? (
-          <TautanCepat href="/finance" ikon="payments">
-            Buku kas
+          <TautanCepat href="/finance" ikon="wallet-outline">
+            Buku Kas &amp; Keuangan
           </TautanCepat>
         ) : (
-          <TautanCepat href="/my-shift" ikon="schedule">
-            Shift saya
+          <TautanCepat href="/my-shift" ikon="calendar-outline">
+            Jadwal Shift Saya
           </TautanCepat>
         )}
       </div>
@@ -134,15 +130,13 @@ function TautanCepat({
   return (
     <Link
       href={href}
-      className="joyops-aksi flex min-h-11 items-center gap-2 rounded-md border border-line bg-surface px-3 text-kecil font-medium text-ink hover:border-primary hover:bg-paper"
+      prefetch={true}
+      className="joyops-aksi flex min-h-11 items-center gap-2 rounded-lg border border-line bg-surface px-3.5 text-kecil font-semibold text-ink hover:border-primary/60 hover:bg-paper hover:text-primary transition-colors shadow-xs"
     >
-      <span
-        aria-hidden="true"
-        className="material-symbols-outlined text-[1.15em] text-ink-muted"
-      >
-        {ikon}
+      <span className="text-ink-muted group-hover:text-primary">
+        <IonIcon name={ikon} size={16} />
       </span>
-      {children}
+      <span>{children}</span>
     </Link>
   );
 }

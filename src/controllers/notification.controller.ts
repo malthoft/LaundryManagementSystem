@@ -5,16 +5,18 @@ import { buatKlienServer } from "@/lib/supabase/server";
 import { catatKegagalan, teks, type AksiForm } from "@/lib/aksi";
 import { pesanPerField, skemaTandaiNotif } from "@/lib/validation";
 import { berhasil, gagal } from "@/types/domain";
-import { tandaiDibaca, tandaiSemuaDibaca } from "@/models/notification.model";
+import {
+  hapusSemuaNotifikasi,
+  tandaiDibaca,
+  tandaiSemuaDibaca,
+} from "@/models/notification.model";
 
-/** Tandai satu notifikasi dibaca. RLS memastikan hanya milik sendiri. */
+/** Tandai satu notifikasi dibaca. RLS memastikan hanya baris milik sendiri. */
 export const tandaiDibacaAction: AksiForm<null> = async (_sebelumnya, data) => {
   const cek = skemaTandaiNotif.safeParse({ id: teks(data, "id") });
   if (!cek.success) {
     return gagal("Notifikasi tidak valid.", pesanPerField(cek.error));
   }
-  // Terpisah dari pemeriksaan di atas supaya penyempitan tipe `cek.error`
-  // tetap berlaku.
   if (!cek.data.id) {
     return gagal("Notifikasi tidak valid.");
   }
@@ -28,10 +30,12 @@ export const tandaiDibacaAction: AksiForm<null> = async (_sebelumnya, data) => {
     return gagal("Notifikasi gagal ditandai.");
   }
 
-  revalidatePath("/dashboard");
+  // Revalidate seluruh layout agar ikon lonceng di bilah atas langsung diperbarui
+  revalidatePath("/", "layout");
   return berhasil(null);
 };
 
+/** Tandai semua notifikasi milik pengguna yang sedang login sebagai telah dibaca. */
 export const tandaiSemuaDibacaAction: AksiForm<null> = async () => {
   const supabase = await buatKlienServer();
 
@@ -42,6 +46,21 @@ export const tandaiSemuaDibacaAction: AksiForm<null> = async () => {
     return gagal("Notifikasi gagal ditandai.");
   }
 
-  revalidatePath("/dashboard");
+  revalidatePath("/", "layout");
+  return berhasil(null);
+};
+
+/** Hapus secara manual seluruh notifikasi pengguna saat ini. */
+export const hapusSemuaNotifikasiAction: AksiForm<null> = async () => {
+  const supabase = await buatKlienServer();
+
+  try {
+    await hapusSemuaNotifikasi(supabase);
+  } catch (kesalahan) {
+    catatKegagalan("hapusSemuaNotifikasiAction", kesalahan);
+    return gagal("Gagal membersihkan notifikasi.");
+  }
+
+  revalidatePath("/", "layout");
   return berhasil(null);
 };
