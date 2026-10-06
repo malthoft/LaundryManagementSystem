@@ -58,3 +58,7 @@ scripts/extracted_images/
 scripts/*.pdf
 scripts/*.docx
 
+
+# Artefak hasil test (dibuat ulang tiap run)
+coverage/
+report/

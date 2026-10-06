@@ -13,6 +13,9 @@
     "seed:akun": "node scripts/seed-auth-users.mjs",
     "cek:kontras": "node scripts/cek-kontras.mjs",
     "test": "vitest run",
+    "test:detail": "vitest run --reporter=verbose",
+    "test:security": "vitest run src/__tests__/security.test.ts --reporter=verbose",
+    "test:performance": "vitest run src/__tests__/performance.test.ts --reporter=verbose",
     "test:coverage": "vitest run --coverage",
     "jscpd": "jscpd src/"
   },

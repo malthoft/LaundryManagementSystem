@@ -9,7 +9,15 @@ const compat = new FlatCompat({ baseDirectory: folderIni });
 
 const konfigurasi = [
   {
-    ignores: [".next/**", "node_modules/**", "next-env.d.ts", "scripts/**", ".agents/**"],
+    ignores: [
+      ".next/**",
+      "node_modules/**",
+      "next-env.d.ts",
+      "scripts/**",
+      ".agents/**",
+      "coverage/**",
+      "report/**",
+    ],
   },
   ...compat.extends("next/core-web-vitals", "next/typescript"),
   {
