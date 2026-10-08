@@ -8,6 +8,8 @@ import { pesanPerField, skemaGantiSandiSendiri, skemaLogin, skemaProfilSaya } fr
 import { catatKegagalan, teks, type AksiForm } from "@/lib/aksi";
 import { gagal, berhasil, type Hasil } from "@/types/domain";
 import { ubahNamaSaya } from "@/models/profile.model";
+import { statusPermintaan } from "@/models/permintaan.model";
+import { pesanDariStatus } from "@/lib/pesan-akun";
 
 /**
  * Login. Hanya lapisan ini yang menyentuh Supabase Auth.
@@ -29,6 +31,16 @@ export async function masuk(
   }
 
   const supabase = await buatKlienServer();
+
+  // BR-20 dan BR-21: selama permintaan akun belum diputuskan developer,
+  // pintu masuk tetap tertutup. Pesannya menyebut statusnya, sesuai permintaan.
+  try {
+    const pesan = pesanDariStatus(await statusPermintaan(supabase, cek.data.username));
+    if (pesan) return gagal(pesan);
+  } catch (kesalahan) {
+    // Kegagalan membaca status bukan alasan menutup pintu masuk sepenuhnya.
+    catatKegagalan("masuk/statusPermintaan", kesalahan);
+  }
 
   try {
     const { error } = await supabase.auth.signInWithPassword({

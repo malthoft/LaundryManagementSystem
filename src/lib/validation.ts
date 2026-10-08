@@ -1,4 +1,15 @@
 import { z } from "zod";
+import {
+  BATAS_BULAN,
+  BATAS_DURASI,
+  BATAS_HARGA,
+  BATAS_JUMLAH,
+  BATAS_KAPASITAS_KG,
+  BATAS_KAPASITAS_PCS,
+  BATAS_MINGGU,
+  BATAS_QTY,
+  BATAS_TAHUN,
+} from "@/lib/batas";
 
 /**
  * Skema bersama. Dipakai controller untuk validasi, dan nama field-nya sama
@@ -16,11 +27,25 @@ const teksWajib = (label: string, min: number, maks: number) =>
       message: `${label} maksimal ${maks} karakter`,
     });
 
-const uang = (label: string) =>
+/**
+ * Harga satu layanan atau add-on. Rentangnya diambil dari kebiasaan laundry,
+ * bukan dari batas teknis kolom. Lihat `RASIONAL_BATAS` di `@/lib/batas`.
+ */
+const harga = (label: string) =>
   z.coerce
     .number({ invalid_type_error: `${label} harus berupa angka` })
-    .min(0, `${label} tidak boleh negatif`)
-    .max(999_999_999, `${label} terlalu besar`);
+    .min(BATAS_HARGA.min, `${label} minimal Rp 1.000`)
+    .max(BATAS_HARGA.maks, `${label} maksimal Rp 500.000`);
+
+/**
+ * Nominal satu transaksi kas. Rentangnya lebih lebar daripada harga satu
+ * layanan, karena bisa berupa pengeluaran besar seperti servis mesin.
+ */
+const nominalKas = (label: string) =>
+  z.coerce
+    .number({ invalid_type_error: `${label} harus berupa angka` })
+    .min(BATAS_JUMLAH.min, `${label} minimal Rp 500`)
+    .max(BATAS_JUMLAH.maks, `${label} maksimal Rp 10.000.000`);
 
 const tanggalIso = (label: string) =>
   z
@@ -102,7 +127,7 @@ export const skemaOrderBaru = z.object({
   qty: z.coerce
     .number({ invalid_type_error: "Qty harus berupa angka" })
     .positive("Qty harus lebih dari 0")
-    .max(999, "Qty terlalu besar"),
+    .max(BATAS_QTY.maks, "Qty melebihi kapasitas mesin"),
   addonIds: z.array(z.coerce.number().int().positive()).default([]),
   metodeBayar: z.enum(["Cash", "QRIS"], {
     errorMap: () => ({ message: "Metode pembayaran tidak dikenal" }),
@@ -133,6 +158,15 @@ export const skemaMesin = z.object({
   status: z.enum(["Tersedia", "Digunakan", "Maintenance"], {
     errorMap: () => ({ message: "Status tidak dikenal" }),
   }),
+  kapasitasKg: z.coerce
+    .number({ invalid_type_error: "Kapasitas harus berupa angka" })
+    .min(BATAS_KAPASITAS_KG.min, "Kapasitas minimal 5 kg")
+    .max(BATAS_KAPASITAS_KG.maks, "Kapasitas maksimal 30 kg"),
+  kapasitasPcs: z.coerce
+    .number({ invalid_type_error: "Kapasitas harus berupa angka" })
+    .int("Kapasitas pcs harus bilangan bulat")
+    .min(BATAS_KAPASITAS_PCS.min, "Kapasitas minimal 5 pcs")
+    .max(BATAS_KAPASITAS_PCS.maks, "Kapasitas maksimal 50 pcs"),
 });
 
 export const skemaIdMesin = z.object({
@@ -144,24 +178,24 @@ export const skemaIdMesin = z.object({
 export const skemaLayanan = z.object({
   id: z.coerce.number().int().positive().optional(),
   nama: teksWajib("Nama layanan", 2, 100),
-  harga: uang("Harga"),
+  harga: harga("Harga"),
   satuan: z.enum(["kg", "pcs"], {
     errorMap: () => ({ message: "Satuan harus kg atau pcs" }),
   }),
   durasi: z.coerce
     .number()
     .int("Durasi harus bilangan bulat")
-    .min(1, "Durasi minimal 1 menit")
-    .max(1440, "Durasi maksimal 1440 menit"),
-  ikon: z.string().max(50).default("local_laundry_service"),
+    .min(BATAS_DURASI.min, "Durasi minimal 15 menit")
+    .max(BATAS_DURASI.maks, "Durasi maksimal 4.320 menit (3 hari)"),
+  ikon: z.string().max(24, "Ikon maksimal 24 karakter").default("local_laundry_service"),
   aktif: z.coerce.boolean().default(true),
 });
 
 export const skemaAddon = z.object({
   id: z.coerce.number().int().positive().optional(),
   nama: teksWajib("Nama add-on", 2, 100),
-  harga: uang("Harga"),
-  ikon: z.string().max(50).default("add_circle"),
+  harga: harga("Harga"),
+  ikon: z.string().max(24, "Ikon maksimal 24 karakter").default("add_circle"),
   aktif: z.coerce.boolean().default(true),
 });
 
@@ -177,7 +211,7 @@ export const skemaTransaksi = z.object({
   tipe: z.enum(["Pemasukan", "Pengeluaran"], {
     errorMap: () => ({ message: "Tipe transaksi tidak dikenal" }),
   }),
-  jumlah: uang("Jumlah").refine((nilai) => nilai > 0, "Jumlah harus lebih dari 0"),
+  jumlah: nominalKas("Jumlah"),
   metode: z.enum(["Cash", "QRIS", "Transfer"], {
     errorMap: () => ({ message: "Metode tidak dikenal" }),
   }),
@@ -238,6 +272,91 @@ export const skemaApproveAbsen = z.object({
 
 export const skemaTandaiNotif = z.object({
   id: z.coerce.number().int().positive().optional(),
+});
+
+// --- Filter Periode --------------------------------------------------------
+
+/** Tahun laporan. Data laundry mulai 2024, rencana sampai 2035. */
+export const skemaTahun = z.coerce
+  .number({ invalid_type_error: "Tahun harus berupa angka" })
+  .int("Tahun harus bilangan bulat")
+  .min(BATAS_TAHUN.min, "Tahun harus antara 2024 sampai 2035")
+  .max(BATAS_TAHUN.maks, "Tahun harus antara 2024 sampai 2035");
+
+/** Pekan dalam satu tahun. */
+export const skemaMinggu = z.coerce
+  .number({ invalid_type_error: "Minggu harus berupa angka" })
+  .int("Minggu harus bilangan bulat")
+  .min(BATAS_MINGGU.min, "Minggu harus antara 1 sampai 53")
+  .max(BATAS_MINGGU.maks, "Minggu harus antara 1 sampai 53");
+
+/** Bulan dalam satu tahun. */
+export const skemaBulan = z.coerce
+  .number({ invalid_type_error: "Bulan harus berupa angka" })
+  .int("Bulan harus bilangan bulat")
+  .min(BATAS_BULAN.min, "Bulan harus antara 1 sampai 12")
+  .max(BATAS_BULAN.maks, "Bulan harus antara 1 sampai 12");
+
+// --- Pendaftaran dan lupa sandi --------------------------------------------
+
+const sandiBaru = z
+  .string({ required_error: "Sandi wajib diisi" })
+  .min(6, "Sandi minimal 6 karakter")
+  .max(72, "Sandi maksimal 72 karakter");
+
+/** Pendaftaran Admin yang akan diperiksa developer. */
+export const skemaDaftar = z
+  .object({
+    username: z
+      .string({ required_error: "Username wajib diisi" })
+      .transform((nilai) => nilai.trim().toLowerCase())
+      .refine((nilai) => polaUsername.test(nilai), {
+        message:
+          "Username hanya huruf kecil, angka, titik, garis bawah, atau strip (3 sampai 30)",
+      }),
+    nama: teksWajib("Nama", 2, 100),
+    sandi: sandiBaru,
+    ulangi: z.string({ required_error: "Ulangi sandi wajib diisi" }),
+  })
+  .refine((nilai) => nilai.sandi === nilai.ulangi, {
+    path: ["ulangi"],
+    message: "Ulangan sandi tidak sama",
+  });
+
+/** Pengajuan lupa sandi, cukup dengan nama pengguna. */
+export const skemaLupaSandi = z.object({
+  username: z
+    .string({ required_error: "Username wajib diisi" })
+    .transform((nilai) => nilai.trim().toLowerCase())
+    .refine((nilai) => polaUsername.test(nilai), {
+      message:
+        "Username hanya huruf kecil, angka, titik, garis bawah, atau strip (3 sampai 30)",
+    }),
+});
+
+/** Pengisian sandi baru lewat tautan sekali pakai dari developer. */
+export const skemaAturSandi = z
+  .object({
+    // Panjangnya longgar sengaja: token diterbitkan sebagai 64 karakter heksa
+    // (256 bit). Dulunya skemanya menuntut tepat 48, sehingga setiap tautan
+    // selalu ditolak sebelum sempat diperiksa ke basis data.
+    token: z
+      .string({ required_error: "Tautan tidak valid" })
+      .regex(/^[a-f0-9]{32,128}$/, "Tautan tidak valid"),
+    sandiBaru: sandiBaru,
+    ulangi: z.string({ required_error: "Ulangi sandi wajib diisi" }),
+  })
+  .refine((nilai) => nilai.sandiBaru === nilai.ulangi, {
+    path: ["ulangi"],
+    message: "Ulangan sandi tidak sama",
+  });
+
+/** Kunci rahasia halaman developer. */
+export const skemaKunciDeveloper = z.object({
+  kunci: z
+    .string({ required_error: "Kunci salah" })
+    .min(1, "Kunci salah")
+    .max(200, "Kunci salah"),
 });
 
 // --- Pembantu --------------------------------------------------------------

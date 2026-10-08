@@ -3,6 +3,8 @@ import { FormMasuk } from "./FormMasuk";
 import { Kartu, IsiKartu } from "@/components/ui/Kartu";
 import { PesanHasil } from "@/components/ui/Keadaan";
 import { BANTUAN_LUPA_SANDI } from "@/lib/constants";
+import { PESAN_TERKIRIM } from "@/lib/pesan-akun";
+import Link from "next/link";
 
 export const metadata: Metadata = {
   title: "Masuk",
@@ -14,6 +16,9 @@ export const dynamic = "force-dynamic";
 const PESAN_URL: Record<string, string> = {
   nonaktif: "Akun ini sedang tidak aktif. Hubungi Admin untuk mengaktifkan kembali.",
   keluar: "Anda sudah keluar dari sistem.",
+  "sandi-diubah":
+    "Sandi berhasil diubah. Silakan masuk dengan sandi baru Anda.",
+  terkirim: PESAN_TERKIRIM,
 };
 
 export default async function HalamanMasuk({
@@ -56,10 +61,18 @@ export default async function HalamanMasuk({
             Lupa sandi
           </h2>
           <ul className="mt-1.5 list-disc space-y-1 pl-4 text-kecil text-ink-muted">
-            {BANTUAN_LUPA_SANDI.map((baris) => (
+            {BANTUAN_LUPA_SANDI.isi.map((baris) => (
               <li key={baris}>{baris}</li>
             ))}
           </ul>
+          <div className="mt-3 flex flex-wrap gap-x-4 gap-y-1.5 border-t border-line pt-3 text-kecil">
+            <Link href="/lupa-sandi" className="font-semibold text-primary">
+              Ajukan lupa sandi
+            </Link>
+            <Link href="/register" className="font-semibold text-primary">
+              Belum punya akun? Daftar
+            </Link>
+          </div>
         </section>
       </div>
     </main>

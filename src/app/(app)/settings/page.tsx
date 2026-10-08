@@ -80,7 +80,7 @@ export default async function HalamanPengaturan() {
         <KepalaKartu judul="Bila lupa sandi" ikon="help" />
         <IsiKartu>
           <ul className="flex flex-col gap-2 text-kecil text-ink-muted">
-            {BANTUAN_LUPA_SANDI.map((baris) => (
+            {BANTUAN_LUPA_SANDI.isi.map((baris) => (
               <li key={baris} className="flex items-start gap-2">
                 <span aria-hidden="true" className="material-symbols-outlined text-[1.1em]">
                   arrow_right

@@ -190,8 +190,14 @@ export const WARNA_BILAH_PERAMBAN = {
 /** Stasiun kerja yang biasa dipakai. Bebas diketik juga. */
 export const STASIUN_UMUM = ["Kasir", "Cuci", "Pengeringan", "Setrika", "Packing"];
 
-/** Halaman panduan: isi yang dibaca dari dalam aplikasi. */
-export const BANTUAN_LUPA_SANDI = [
-  "Karyawan: minta Admin mereset sandi dari menu Karyawan.",
-  "Admin: reset lewat menu Karyawan, atau dari Supabase bila akun Admin terkunci.",
-];
+/**
+ * Halaman panduan lupa sandi. Tetap berupa daftar baris agar bisa dipetakan,
+ * dengan `tautan` menempel sebagai properti penunjuk halaman /lupa-sandi.
+ */
+export const BANTUAN_LUPA_SANDI: { tautan: string; isi: string[] } = {
+  tautan: "/lupa-sandi",
+  isi: [
+    "Karyawan: minta Admin mereset sandi dari menu Karyawan.",
+    "Admin: pakai menu Lupa sandi, lalu tunggu verifikasi developer.",
+  ],
+};

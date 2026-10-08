@@ -9,6 +9,12 @@ import { NextResponse, type NextRequest } from "next/server";
  * - Sudah masuk dan membuka /login, diarahkan ke /dashboard.
  */
 export async function segarkanSesi(permintaan: NextRequest) {
+  // Halaman yang boleh dibuka tanpa sesi masuk. /developer memakai kunci
+  // rahasia sendiri, bukan akun, jadi jangan ikut diperiksa sesi.
+  const TERBUKA = ["/login", "/register", "/lupa-sandi", "/atur-sandi", "/developer"];
+  if (TERBUKA.some((t) => permintaan.nextUrl.pathname.startsWith(t))) {
+    return NextResponse.next();
+  }
   let balasan = NextResponse.next({ request: permintaan });
 
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
