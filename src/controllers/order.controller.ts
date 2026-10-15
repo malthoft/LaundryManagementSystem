@@ -6,6 +6,7 @@ import { profilSaya } from "@/lib/auth";
 import { daftarAngka, catatKegagalan, teks, type AksiForm } from "@/lib/aksi";
 import { pesanPerField, skemaBatalOrder, skemaIdOrder, skemaOrderBaru } from "@/lib/validation";
 import { berhasil, gagal, type Hasil } from "@/types/domain";
+import { rupiah } from "@/lib/format";
 import {
   ambilOrderById,
   batalkanOrder,
@@ -42,7 +43,11 @@ async function kabarkanOrderBaru(
  * (status mesin, tabrakan mesin, total uang) dikerjakan di dalam fungsi
  * database `buat_order`, supaya tidak ada celah antara memeriksa dan menyimpan.
  */
-export const buatOrderBaru: AksiForm<{ kode: string }> = async (
+export const buatOrderBaru: AksiForm<{
+  kode: string;
+  pelanggan: string;
+  total: number;
+}> = async (
   _sebelumnya,
   data
 ) => {
@@ -133,11 +138,17 @@ export const buatOrderBaru: AksiForm<{ kode: string }> = async (
 
   let kode = "";
   let orderId = 0;
+  let pelanggan = isian.namaPelanggan;
+  let total = 0;
 
   try {
     const order = await buatOrder(supabase, isian);
     kode = order.order_code;
     orderId = order.id;
+    // Nama dan total diambil dari baris order yang tersimpan, bukan dari
+    // isian form, supaya yang tampil selalu nilai yang benar-benar tercatat.
+    pelanggan = order.customer_name;
+    total = Number(order.grand_total ?? 0);
   } catch (kesalahan) {
     catatKegagalan("buatOrderBaru", kesalahan);
     const pesan =
@@ -147,7 +158,7 @@ export const buatOrderBaru: AksiForm<{ kode: string }> = async (
 
   await kabarkanOrderBaru(
     "Order Baru",
-    `Order ${kode} untuk ${cuci.machine_code} & ${pengering.machine_code} tercatat.`,
+    `Order ${kode} atas nama ${pelanggan} — ${cuci.machine_code} & ${pengering.machine_code}, total ${rupiah(total)}.`,
     "success",
     orderId
   );
@@ -157,7 +168,7 @@ export const buatOrderBaru: AksiForm<{ kode: string }> = async (
   revalidatePath("/machines");
   revalidatePath("/finance");
 
-  return berhasil({ kode });
+  return berhasil({ kode, pelanggan, total });
 };
 
 /** Tandai order selesai dan lepaskan mesinnya (BR-07). */

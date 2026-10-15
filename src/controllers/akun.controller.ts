@@ -19,6 +19,7 @@ import {
   tandaiTokenTerpakai,
 } from "@/models/permintaan.model";
 import { kirimRingkasanPermintaan } from "@/lib/email";
+import { ambilProfilByUsername } from "@/models/profile.model";
 import {
   PESAN_MENUNGGU,
   PESAN_MENUNGGU_RESET,
@@ -109,6 +110,17 @@ export const lupaSandiAction: AksiForm<null> = async (_sebelum, data) => {
   if (!cek.success) return gagal("Ada isian yang belum benar.", pesanPerField(cek.error));
   if (!apakahAdminTersedia()) return gagal(LAYANAN_BELUM_AKTIF);
   try {
+    // Nama pengguna yang tidak terdaftar tidak boleh masuk ke kotak masuk
+    // developer: permintaannya tidak akan pernah bisa dijawab dengan benar,
+    // dan pemiliknya juga tidak akan pernah menerima tautan apa pun.
+    const profil = await ambilProfilByUsername(buatKlienAdmin(), cek.data.username);
+    if (!profil) {
+      return gagal("Nama pengguna tidak ditemukan.", {
+        username:
+          "Nama pengguna ini tidak terdaftar. Periksa kembali penulisannya.",
+      });
+    }
+
     const klien = await buatKlienServer();
     let catat = await catatPermintaan(klien, {
       jenis: "Lupa Sandi",

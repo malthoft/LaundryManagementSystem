@@ -43,41 +43,54 @@ export async function jumlahBelumDibaca(
   return count ?? 0;
 }
 
-/** Tandai satu notifikasi telah dibaca. */
+/**
+ * Tandai satu notifikasi telah dibaca.
+ *
+ * Mengembalikan jumlah baris yang benar-benar berubah. PostgREST tidak
+ * melempar galat ketika RLS menolak sebuah baris — barisnya hanya tidak
+ * tersentuh. Tanpa menghitung baris, kegagalan seperti itu akan lolos sebagai
+ * "sukses".
+ */
 export async function tandaiDibaca(
   supabase: KlienSupabase,
   id: number
-): Promise<void> {
-  const { error } = await supabase
+): Promise<number> {
+  const { data, error } = await supabase
     .from("notifications")
     .update({ is_read: true })
-    .eq("id", id);
+    .eq("id", id)
+    .select("id");
 
   if (error) throw new Error(error.message);
+  return data?.length ?? 0;
 }
 
 /** Tandai semua notifikasi pengguna saat ini sebagai telah dibaca. */
 export async function tandaiSemuaDibaca(
   supabase: KlienSupabase
-): Promise<void> {
-  const { error } = await supabase
+): Promise<number> {
+  const { data, error } = await supabase
     .from("notifications")
     .update({ is_read: true })
-    .eq("is_read", false);
+    .eq("is_read", false)
+    .select("id");
 
   if (error) throw new Error(error.message);
+  return data?.length ?? 0;
 }
 
 /** Hapus / bersihkan seluruh notifikasi pengguna secara manual. */
 export async function hapusSemuaNotifikasi(
   supabase: KlienSupabase
-): Promise<void> {
-  const { error } = await supabase
+): Promise<number> {
+  const { data, error } = await supabase
     .from("notifications")
     .delete()
-    .gt("id", 0);
+    .gt("id", 0)
+    .select("id");
 
   if (error) throw new Error(error.message);
+  return data?.length ?? 0;
 }
 
 /**

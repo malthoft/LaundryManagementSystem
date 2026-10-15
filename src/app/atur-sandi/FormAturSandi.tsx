@@ -17,7 +17,7 @@ export function FormAturSandi({ token }: { token: string }) {
   const galat = hasil && !hasil.ok ? (hasil.field ?? {}) : {};
 
   return (
-    <form action={kirim} className="grid gap-3">
+    <form action={kirim} className="grid gap-4">
       {hasil && !hasil.ok ? (
         <PesanHasil jenis="gagal">{hasil.error}</PesanHasil>
       ) : null}
@@ -54,7 +54,7 @@ export function FormAturSandi({ token }: { token: string }) {
         galat={galat?.ulangi}
       />
 
-      <Tombol type="submit" varian="utama" disabled={jalan}>
+      <Tombol type="submit" varian="utama" lebarPenuh ikon="save" disabled={jalan}>
         {jalan ? "Menyimpan…" : "Simpan sandi baru"}
       </Tombol>
     </form>

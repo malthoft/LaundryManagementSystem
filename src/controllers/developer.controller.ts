@@ -1,22 +1,45 @@
 "use server";
 
-import { cookies } from "next/headers";
+import { cookies, headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 import type { AksiForm } from "@/lib/aksi";
 import { teks, catatKegagalan } from "@/lib/aksi";
-import type { Hasil } from "@/types/domain";
-import { skemaKunciDeveloper } from "@/lib/validation";
-import { pesanPerField } from "@/lib/validation";
+import { berhasil, gagal } from "@/types/domain";
 import {
-  NAMA_COOKIE_KUNCI,
+  pesanPerField,
+  skemaMasukDeveloper,
+  skemaLupaSandiDeveloper,
+  skemaAturSandiDeveloper,
+} from "@/lib/validation";
+import {
+  NAMA_COOKIE_SESI,
   MASA_BERLAKU_COOKIE_JAM,
-  PESAN_KUNCI_SALAH,
-  PESAN_TANPA_KUNCI,
-  kunciDeveloper,
-  kunciSama,
+  MASA_BERLAKU_TOKEN_MENIT,
+  PESAN_MASUK_SALAH,
+  PESAN_SANDI_BELUM_DIATUR,
+  PESAN_SANDI_TIDAK_COCOK,
+  PESAN_SESI_HABIS,
+  PESAN_TOKEN_HANGUS,
+  akunDeveloperSiap,
+  buatSesiDeveloper,
+  sesiDeveloperSah,
+  sandiCocok,
+  teksSama,
+  buatTokenReset,
+  hashToken,
+  emailDeveloper,
+  sandiAwalDeveloper,
 } from "@/lib/developer";
 import { buatKlienAdmin, apakahAdminTersedia } from "@/lib/supabase/admin";
+import {
+  ambilAkunDeveloper,
+  ambilAkunDenganToken,
+  pastikanAkunAwal,
+  simpanSandiDeveloper,
+  simpanTokenReset,
+} from "@/models/developer-akun.model";
+import { kirimTautanResetDeveloper } from "@/lib/email";
 import {
   ambilSemuaPermintaan,
   hitungPermintaan,
@@ -27,30 +50,79 @@ import {
   type StatusPermintaan,
 } from "@/models/permintaan.model";
 
-const gagal = <T>(error: string): Hasil<T> => ({ ok: false, error });
-const sukses = <T>(data: T): Hasil<T> => ({ ok: true, data });
+/** Alamat asal aplikasi, dipakai untuk menyusun tautan atur ulang. */
+async function asalAplikasi(): Promise<string> {
+  const tetap = process.env.NEXT_PUBLIC_SITE_URL?.trim();
+  if (tetap) return tetap.replace(/\/+$/, "");
+
+  const kepala = await headers();
+  const host = kepala.get("x-forwarded-host") ?? kepala.get("host") ?? "localhost:3000";
+  const protokol =
+    kepala.get("x-forwarded-proto") ??
+    (host.startsWith("localhost") || host.startsWith("127.0.0.1") ? "http" : "https");
+
+  return `${protokol}://${host}`;
+}
+
+/** Sesi developer masih sah menurut cookie yang dikirim peramban. */
+async function sesiSah(): Promise<boolean> {
+  const toko = await cookies();
+  return sesiDeveloperSah(toko.get(NAMA_COOKIE_SESI)?.value ?? null);
+}
 
 /**
- * Masuk ke halaman developer memakai kunci rahasia.
+ * Masuk ke halaman developer memakai email dan sandi.
  *
- * Kuncinya dibandingkan di server dengan perbandingan tahan waktu, lalu
- * disimpan sebagai cookie hanya-HTTP selama 8 jam. Kunci aslinya tidak pernah
- * dikirim balik ke peramban.
+ * Sandi diperiksa terhadap hash di tabel `developer_akun`. Bila barisnya belum
+ * ada (pemasangan baru), sandi awal dari berkas lingkungan dipakai sekali,
+ * lalu langsung disimpan sebagai hash supaya bisa diganti lewat surel.
  */
 export const masukDeveloperAction: AksiForm<null> = async (_sebelum, data) => {
-  if (!kunciDeveloper()) return gagal(PESAN_TANPA_KUNCI);
+  if (!akunDeveloperSiap()) return gagal(PESAN_SANDI_BELUM_DIATUR);
 
-  const hasil = skemaKunciDeveloper.safeParse({
-    kunci: teks(data, "kunci"),
+  const cek = skemaMasukDeveloper.safeParse({
+    email: teks(data, "email"),
+    sandi: teks(data, "sandi"),
   });
-  if (!hasil.success) {
-    return { ok: false, error: PESAN_KUNCI_SALAH, field: pesanPerField(hasil.error) };
+  if (!cek.success) {
+    return gagal(PESAN_MASUK_SALAH, pesanPerField(cek.error));
   }
 
-  if (!kunciSama(hasil.data.kunci)) return gagal(PESAN_KUNCI_SALAH);
+  const { email, sandi } = cek.data;
+  if (!teksSama(email, emailDeveloper())) {
+    return gagal(PESAN_MASUK_SALAH, { email: "Email tidak dikenal" });
+  }
+
+  let akun = null;
+  if (apakahAdminTersedia()) {
+    try {
+      akun = await ambilAkunDeveloper(buatKlienAdmin());
+    } catch (kesalahan) {
+      catatKegagalan("masukDeveloperAction:ambilAkun", kesalahan);
+    }
+  }
+
+  let sandiSah = false;
+
+  if (akun) {
+    sandiSah = sandiCocok(sandi, akun.sandi_hash, akun.sandi_salt);
+  } else {
+    const awal = sandiAwalDeveloper();
+    sandiSah = Boolean(awal) && teksSama(sandi, awal as string);
+
+    if (sandiSah && apakahAdminTersedia()) {
+      try {
+        await simpanSandiDeveloper(buatKlienAdmin(), emailDeveloper(), sandi);
+      } catch (kesalahan) {
+        catatKegagalan("masukDeveloperAction:simpanAwal", kesalahan);
+      }
+    }
+  }
+
+  if (!sandiSah) return gagal(PESAN_MASUK_SALAH, { sandi: PESAN_SANDI_TIDAK_COCOK });
 
   const toko = await cookies();
-  toko.set(NAMA_COOKIE_KUNCI, hasil.data.kunci, {
+  toko.set(NAMA_COOKIE_SESI, buatSesiDeveloper(), {
     httpOnly: true,
     sameSite: "lax",
     secure: process.env.NODE_ENV === "production",
@@ -59,36 +131,145 @@ export const masukDeveloperAction: AksiForm<null> = async (_sebelum, data) => {
   });
 
   revalidatePath("/developer");
-  return sukses(null);
+  return berhasil(null);
 };
 
-/**
- * Keluar dari halaman developer dengan menghapus kuncinya.
- *
- * Dipakai langsung pada `action` sebuah form, jadi tandatangannya satu argumen
- * `FormData`, bukan `AksiForm`.
- */
+/** Keluar dari halaman developer dengan menghapus sesinya. */
 export const keluarDeveloperAction = async (): Promise<never> => {
   const toko = await cookies();
-  toko.delete(NAMA_COOKIE_KUNCI);
+  toko.delete(NAMA_COOKIE_SESI);
   redirect("/developer");
 };
 
-/** Catatan developer bersifat sukarela, tetapi tetap dibatasi panjangnya. */
+/**
+ * Kirim tautan atur ulang sandi ke surel developer.
+ *
+ * Balasannya sengaja umum: tidak membedakan email yang terdaftar dari yang
+ * tidak. Bila surel belum diatur dan aplikasi berjalan di luar produksi,
+ * tautannya ditampilkan di layar supaya tetap bisa dipakai saat pengembangan.
+ */
+export const lupaSandiDeveloperAction: AksiForm<{
+  pesan: string;
+  tautan: string | null;
+}> = async (_sebelum, data) => {
+  if (!akunDeveloperSiap()) return gagal(PESAN_SANDI_BELUM_DIATUR);
+
+  const cek = skemaLupaSandiDeveloper.safeParse({ email: teks(data, "email") });
+  if (!cek.success) {
+    return gagal("Periksa kembali email Anda.", pesanPerField(cek.error));
+  }
+
+  const email = cek.data.email;
+  const balasanUmum =
+    "Kalau email itu terdaftar, tautan atur ulang sudah dikirim ke kotak masuknya.";
+
+  if (!teksSama(email, emailDeveloper())) {
+    return berhasil({ pesan: balasanUmum, tautan: null });
+  }
+
+  if (!apakahAdminTersedia()) {
+    return gagal("SUPABASE_SERVICE_ROLE_KEY belum diisi, jadi tautan belum bisa diterbitkan.");
+  }
+
+  try {
+    const klien = buatKlienAdmin();
+    const akun = await pastikanAkunAwal(klien);
+    if (!akun) return gagal(PESAN_SANDI_BELUM_DIATUR);
+
+    const { token, hash } = buatTokenReset();
+    const hangus = new Date(
+      Date.now() + MASA_BERLAKU_TOKEN_MENIT * 60 * 1000
+    ).toISOString();
+    await simpanTokenReset(klien, hash, hangus);
+
+    const tautan = `${await asalAplikasi()}/developer/atur-sandi?token=${token}`;
+    const terkirim = await kirimTautanResetDeveloper(tautan);
+
+    if (!terkirim && process.env.NODE_ENV === "production") {
+      return gagal(
+        "Surel belum aktif, jadi tautan tidak bisa dikirim. Lengkapi SMTP_HOST, SMTP_PORT, SMTP_USER, SMTP_PASSWORD, dan EMAIL_DEVELOPER di berkas lingkungan."
+      );
+    }
+
+    return berhasil({
+      pesan: terkirim
+        ? `Tautan atur ulang sudah dikirim ke ${email}.`
+        : "Surel belum aktif, jadi tautannya ditampilkan di layar ini.",
+      tautan: terkirim ? null : tautan,
+    });
+  } catch (kesalahan) {
+    catatKegagalan("lupaSandiDeveloperAction", kesalahan);
+    return gagal("Belum bisa membuat tautan atur ulang.");
+  }
+};
+
+/** Tukar token dari surel dengan sandi developer yang baru. */
+export const aturSandiDeveloperAction: AksiForm<null> = async (_sebelum, data) => {
+  const cek = skemaAturSandiDeveloper.safeParse({
+    token: teks(data, "token"),
+    sandiBaru: teks(data, "sandiBaru"),
+    ulangi: teks(data, "ulangi"),
+  });
+  if (!cek.success) {
+    return gagal("Periksa kembali isian sandi.", pesanPerField(cek.error));
+  }
+
+  if (!apakahAdminTersedia()) {
+    return gagal("SUPABASE_SERVICE_ROLE_KEY belum diisi.");
+  }
+
+  try {
+    const klien = buatKlienAdmin();
+    const akun = await ambilAkunDenganToken(klien, hashToken(cek.data.token));
+
+    if (!akun || !akun.token_hangus_pada) return gagal(PESAN_TOKEN_HANGUS);
+    if (new Date(akun.token_hangus_pada).getTime() < Date.now()) {
+      return gagal(PESAN_TOKEN_HANGUS);
+    }
+
+    // Menyimpan sandi sekaligus mengosongkan tokennya, jadi tautannya sekali pakai.
+    await simpanSandiDeveloper(klien, akun.email, cek.data.sandiBaru);
+    return berhasil(null);
+  } catch (kesalahan) {
+    catatKegagalan("aturSandiDeveloperAction", kesalahan);
+    return gagal("Belum bisa menyimpan sandi baru.");
+  }
+};
+
+export interface IsiHalamanDeveloper {
+  daftar: PermintaanAkun[];
+  ringkasan: Record<StatusPermintaan, number>;
+}
+
+/**
+ * Isi halaman developer, hanya untuk pemegang sesi yang sah.
+ * Dipanggil dari halamannya, bukan dari peramban.
+ */
+export async function muatHalamanDeveloper(): Promise<IsiHalamanDeveloper | null> {
+  if (!(await sesiSah())) return null;
+  if (!apakahAdminTersedia()) return null;
+
+  const klien = buatKlienAdmin();
+
+  const [daftar, ringkasan] = await Promise.all([
+    ambilSemuaPermintaan(klien),
+    hitungPermintaan(klien),
+  ]);
+
+  return { daftar, ringkasan };
+}
 
 /**
  * Setujui atau tolak sebuah permintaan akun.
  *
- * Kuncinya diperiksa ulang di sini, bukan hanya di halaman. Mempercayai
- * tampilan saja berarti aksi ini bisa dipanggil langsung tanpa lewat form.
+ * Sesi diperiksa ulang di sini, bukan hanya di halaman. Mempercayai tampilan
+ * saja berarti aksi ini bisa dipanggil langsung tanpa lewat form.
  */
 export const putuskanPermintaanAction: AksiForm<{
   tautanReset: string | null;
+  setuju: boolean;
 }> = async (_sebelum, data) => {
-  const toko = await cookies();
-  if (!kunciSama(toko.get(NAMA_COOKIE_KUNCI)?.value ?? "")) {
-    return gagal(PESAN_KUNCI_SALAH);
-  }
+  if (!(await sesiSah())) return gagal(PESAN_SESI_HABIS);
   if (!apakahAdminTersedia()) {
     return gagal(
       "SUPABASE_SERVICE_ROLE_KEY belum diisi, sehingga permintaan belum bisa diputuskan."
@@ -113,7 +294,9 @@ export const putuskanPermintaanAction: AksiForm<{
     );
     // Sengaja TANPA revalidatePath: menyegarkan daftar akan memindahkan baris
     // ke riwayat dan meng-unmount panel tautan sebelum sempat tampil.
-    return sukses({ tautanReset });
+    // `setuju` ikut dibalikkan supaya tampilan bisa membedakan persetujuan
+    // dari penolakan — tanpa itu, penolakan pun akan tampil "disetujui".
+    return berhasil({ tautanReset, setuju });
   } catch (kesalahan) {
     catatKegagalan("putuskanPermintaanAction", kesalahan);
     const pesan = kesalahan instanceof Error ? kesalahan.message : "";
@@ -125,39 +308,12 @@ export const putuskanPermintaanAction: AksiForm<{
   }
 };
 
-export interface IsiHalamanDeveloper {
-  daftar: PermintaanAkun[];
-  ringkasan: Record<StatusPermintaan, number>;
-}
-
-/**
- * Isi halaman developer, hanya untuk pemegang kunci yang benar.
- * Dipanggil dari halamannya, bukan dari peramban.
- */
-export async function muatHalamanDeveloper(): Promise<IsiHalamanDeveloper | null> {
-  const toko = await cookies();
-  if (!kunciSama(toko.get(NAMA_COOKIE_KUNCI)?.value ?? "")) return null;
-
-  if (!apakahAdminTersedia()) return null;
-  const klien = buatKlienAdmin();
-
-  const [daftar, ringkasan] = await Promise.all([
-    ambilSemuaPermintaan(klien),
-    hitungPermintaan(klien),
-  ]);
-
-  return { daftar, ringkasan };
-}
-
 /**
  * Hapus satu baris riwayat, atau seluruh riwayat bila id bernilai "semua".
- * Kunci diperiksa ulang di sini, sama seperti aksi putusan.
+ * Sesi diperiksa ulang di sini, sama seperti aksi putusan.
  */
 export const hapusPermintaanAction: AksiForm<null> = async (_sebelum, data) => {
-  const toko = await cookies();
-  if (!kunciSama(toko.get(NAMA_COOKIE_KUNCI)?.value ?? "")) {
-    return gagal(PESAN_KUNCI_SALAH);
-  }
+  if (!(await sesiSah())) return gagal(PESAN_SESI_HABIS);
   if (!apakahAdminTersedia()) {
     return gagal("SUPABASE_SERVICE_ROLE_KEY belum diisi.");
   }
@@ -174,11 +330,11 @@ export const hapusPermintaanAction: AksiForm<null> = async (_sebelum, data) => {
       await hapusPermintaan(klien, id);
     }
     revalidatePath("/developer");
-    return sukses(null);
+    return berhasil(null);
   } catch (kesalahan) {
     catatKegagalan("hapusPermintaanAction", kesalahan);
     return gagal(
-      "Belum bisa memutus permintaan: " +
+      "Belum bisa menghapus riwayat: " +
         (kesalahan instanceof Error ? kesalahan.message : "galat tidak diketahui")
     );
   }

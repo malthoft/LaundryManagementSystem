@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { Kartu, IsiKartu } from "@/components/ui/Kartu";
 import { PesanHasil } from "@/components/ui/Keadaan";
 import { FormAturSandi } from "./FormAturSandi";
 
@@ -17,28 +18,42 @@ export default async function HalamanAturSandi({
   const { token } = await searchParams;
 
   return (
-    <div className="flex min-h-[calc(100vh-3.25rem)] items-center justify-center bg-bg px-4 py-8">
-      <main className="w-full max-w-sm rounded-md border border-line bg-surface p-5 shadow-1">
-        <h1 className="font-display text-lg text-ink">Penggantian sandi</h1>
-        <p className="mt-1 text-kecil text-ink-muted">
-          Tautan ini sekali pakai dan berlaku 30 menit sejak diterbitkan.
-        </p>
+    <div className="mx-auto flex min-h-screen w-full max-w-md flex-col justify-center px-4 py-10">
+      <div className="flex items-center gap-3">
+        <span
+          aria-hidden="true"
+          className="flex h-11 w-11 shrink-0 items-center justify-center rounded-md bg-primary text-primary-fg"
+        >
+          <span className="material-symbols-outlined text-[1.5rem]">
+            password
+          </span>
+        </span>
+        <div className="min-w-0">
+          <h1 className="font-display text-lg font-extrabold tracking-tight text-ink">
+            Penggantian sandi
+          </h1>
+          <p className="text-kecil text-ink-muted">
+            Tautan ini sekali pakai dan berlaku 30 menit sejak diterbitkan.
+          </p>
+        </div>
+      </div>
 
-        <div className="mt-5">
+      <Kartu className="mt-5">
+        <IsiKartu>
           {token ? (
             <FormAturSandi token={token} />
           ) : (
             <PesanHasil jenis="gagal">
               Tautan tidak lengkap. Buka tautan persis seperti yang dikirim
               developer, atau{" "}
-              <Link href="/lupa-sandi" className="text-primary hover:underline">
+              <Link href="/lupa-sandi" className="font-semibold underline">
                 ajukan lupa sandi kembali
               </Link>
               .
             </PesanHasil>
           )}
-        </div>
-      </main>
+        </IsiKartu>
+      </Kartu>
     </div>
   );
 }

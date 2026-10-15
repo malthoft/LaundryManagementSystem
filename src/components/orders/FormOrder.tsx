@@ -1,6 +1,6 @@
 "use client";
 
-import { useActionState, useEffect, useMemo, useState } from "react";
+import { useActionState, useEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { buatOrderBaru } from "@/controllers/order.controller";
 import { Catatan, Centang, Kolom, Pilihan } from "@/components/ui/Kolom";
@@ -54,6 +54,10 @@ export function FormOrder({
   const [popupSukses, setPopupSukses] = useState<InfoPopupSukses | null>(null);
   const [mounted, setMounted] = useState(false);
 
+  // Hasil server yang sudah diolah. Dipakai supaya satu hasil tidak diolah
+  // dua kali (lihat efek di bawah).
+  const hasilDiproses = useRef<unknown>(null);
+
   useEffect(() => {
     setMounted(true);
   }, []);
@@ -94,29 +98,36 @@ export function FormOrder({
 
   // Tangani hasil Server Action ketika sukses
   useEffect(() => {
-    if (hasil && hasil.ok && hasil.data) {
-      setBukaVerifikasi(false);
-      setPopupSukses({
-        kode: hasil.data.kode,
-        pelanggan: namaPelanggan.trim() || "Walk-in",
-        total,
-      });
+    if (!hasil || !hasil.ok || !hasil.data) return;
 
-      // Reset form ke awal
-      setNamaPelanggan("Walk-in");
-      setServiceId("");
-      setWasherId("");
-      setDryerId("");
-      setQty("1");
-      setAddonDipilih([]);
-      setCatatan("");
-      setGalatLokal({});
+    // Hasil yang sama hanya diolah sekali. Tanpa penjaga ini, pengosongan
+    // isian di bawah memicu efek yang sama untuk kedua kalinya — dan pada
+    // putaran kedua nama pelanggan sudah kembali "Walk-in" serta totalnya
+    // sudah nol, sehingga popup yang muncul justru nilai bawaan itu.
+    if (hasilDiproses.current === hasil) return;
+    hasilDiproses.current = hasil;
 
-      if (padaSukses) {
-        padaSukses();
-      }
+    setBukaVerifikasi(false);
+    setPopupSukses({
+      kode: hasil.data.kode,
+      pelanggan: hasil.data.pelanggan || "Walk-in",
+      total: hasil.data.total,
+    });
+
+    // Reset form ke awal
+    setNamaPelanggan("Walk-in");
+    setServiceId("");
+    setWasherId("");
+    setDryerId("");
+    setQty("1");
+    setAddonDipilih([]);
+    setCatatan("");
+    setGalatLokal({});
+
+    if (padaSukses) {
+      padaSukses();
     }
-  }, [hasil, namaPelanggan, total, padaSukses]);
+  }, [hasil, padaSukses]);
 
   // Validasi lokal sebelum membuka kwitansi verifikasi
   function bukaModalVerifikasi(e: React.FormEvent) {

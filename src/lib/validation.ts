@@ -351,13 +351,42 @@ export const skemaAturSandi = z
     message: "Ulangan sandi tidak sama",
   });
 
-/** Kunci rahasia halaman developer. */
-export const skemaKunciDeveloper = z.object({
-  kunci: z
-    .string({ required_error: "Kunci salah" })
-    .min(1, "Kunci salah")
-    .max(200, "Kunci salah"),
+/** Email developer untuk masuk ke halaman developer. */
+export const skemaMasukDeveloper = z.object({
+  email: z
+    .string({ required_error: "Email wajib diisi" })
+    .transform((nilai) => nilai.trim().toLowerCase())
+    .refine((nilai) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(nilai), {
+      message: "Format email tidak valid",
+    }),
+  sandi: z
+    .string({ required_error: "Sandi wajib diisi" })
+    .min(1, "Sandi wajib diisi"),
 });
+
+/** Permintaan tautan atur ulang sandi developer. */
+export const skemaLupaSandiDeveloper = z.object({
+  email: z
+    .string({ required_error: "Email wajib diisi" })
+    .transform((nilai) => nilai.trim().toLowerCase())
+    .refine((nilai) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(nilai), {
+      message: "Format email tidak valid",
+    }),
+});
+
+/** Penukaran token tautan dengan sandi developer yang baru. */
+export const skemaAturSandiDeveloper = z
+  .object({
+    token: z
+      .string({ required_error: "Tautan tidak valid" })
+      .regex(/^[a-f0-9]{32,128}$/, "Tautan tidak valid"),
+    sandiBaru: sandiBaru,
+    ulangi: z.string({ required_error: "Ulangi sandi wajib diisi" }),
+  })
+  .refine((nilai) => nilai.sandiBaru === nilai.ulangi, {
+    path: ["ulangi"],
+    message: "Ulangan sandi tidak sama",
+  });
 
 // --- Pembantu --------------------------------------------------------------
 

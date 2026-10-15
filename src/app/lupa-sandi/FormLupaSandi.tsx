@@ -6,7 +6,13 @@ import { Tombol } from "@/components/ui/Tombol";
 import { PesanHasil } from "@/components/ui/Keadaan";
 import { lupaSandiAction } from "@/controllers/akun.controller";
 
-/** Permintaan tautan pengaturan ulang sandi, keputusannya di tangan developer. */
+/**
+ * Permintaan tautan pengaturan ulang sandi, keputusannya di tangan developer.
+ *
+ * Nama pengguna diperiksa keberadaannya di server. Nama yang tidak terdaftar
+ * langsung ditolak di sini, jadi tidak pernah masuk ke kotak masuk developer
+ * sebagai permintaan yang mustahil dijawab.
+ */
 export function FormLupaSandi() {
   const [hasil, kirim, jalan] = useActionState(lupaSandiAction, null);
   const galat = hasil && !hasil.ok ? (hasil.field ?? {}) : {};
@@ -21,7 +27,7 @@ export function FormLupaSandi() {
   }
 
   return (
-    <form action={kirim} className="grid gap-3">
+    <form action={kirim} className="grid gap-4">
       {hasil && !hasil.ok ? (
         <PesanHasil jenis="gagal">{hasil.error}</PesanHasil>
       ) : null}
@@ -38,7 +44,7 @@ export function FormLupaSandi() {
         petunjuk="Username akun Admin yang sandinya ingin diganti."
       />
 
-      <Tombol type="submit" varian="utama" disabled={jalan}>
+      <Tombol type="submit" varian="utama" lebarPenuh ikon="send" disabled={jalan}>
         {jalan ? "Mengirim…" : "Kirim permintaan"}
       </Tombol>
     </form>

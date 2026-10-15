@@ -11,8 +11,13 @@ import {
   tandaiSemuaDibaca,
 } from "@/models/notification.model";
 
-/** Tandai satu notifikasi dibaca. RLS memastikan hanya baris milik sendiri. */
-export const tandaiDibacaAction: AksiForm<null> = async (_sebelumnya, data) => {
+/**
+ * Tandai satu notifikasi dibaca. RLS memastikan hanya baris milik sendiri.
+ *
+ * Jumlah baris yang berubah ikut dikembalikan supaya komponen bisa tahu bila
+ * penulisan sebenarnya tidak mengenai baris mana pun.
+ */
+export const tandaiDibacaAction: AksiForm<number> = async (_sebelumnya, data) => {
   const cek = skemaTandaiNotif.safeParse({ id: teks(data, "id") });
   if (!cek.success) {
     return gagal("Notifikasi tidak valid.", pesanPerField(cek.error));
@@ -24,43 +29,43 @@ export const tandaiDibacaAction: AksiForm<null> = async (_sebelumnya, data) => {
   const supabase = await buatKlienServer();
 
   try {
-    await tandaiDibaca(supabase, cek.data.id);
+    const jumlah = await tandaiDibaca(supabase, cek.data.id);
+
+    // Revalidate seluruh layout agar ikon lonceng di bilah atas langsung diperbarui
+    revalidatePath("/", "layout");
+    return berhasil(jumlah);
   } catch (kesalahan) {
     catatKegagalan("tandaiDibacaAction", kesalahan);
     return gagal("Notifikasi gagal ditandai.");
   }
-
-  // Revalidate seluruh layout agar ikon lonceng di bilah atas langsung diperbarui
-  revalidatePath("/", "layout");
-  return berhasil(null);
 };
 
 /** Tandai semua notifikasi milik pengguna yang sedang login sebagai telah dibaca. */
-export const tandaiSemuaDibacaAction: AksiForm<null> = async () => {
+export const tandaiSemuaDibacaAction: AksiForm<number> = async () => {
   const supabase = await buatKlienServer();
 
   try {
-    await tandaiSemuaDibaca(supabase);
+    const jumlah = await tandaiSemuaDibaca(supabase);
+
+    revalidatePath("/", "layout");
+    return berhasil(jumlah);
   } catch (kesalahan) {
     catatKegagalan("tandaiSemuaDibacaAction", kesalahan);
     return gagal("Notifikasi gagal ditandai.");
   }
-
-  revalidatePath("/", "layout");
-  return berhasil(null);
 };
 
 /** Hapus secara manual seluruh notifikasi pengguna saat ini. */
-export const hapusSemuaNotifikasiAction: AksiForm<null> = async () => {
+export const hapusSemuaNotifikasiAction: AksiForm<number> = async () => {
   const supabase = await buatKlienServer();
 
   try {
-    await hapusSemuaNotifikasi(supabase);
+    const jumlah = await hapusSemuaNotifikasi(supabase);
+
+    revalidatePath("/", "layout");
+    return berhasil(jumlah);
   } catch (kesalahan) {
     catatKegagalan("hapusSemuaNotifikasiAction", kesalahan);
     return gagal("Gagal membersihkan notifikasi.");
   }
-
-  revalidatePath("/", "layout");
-  return berhasil(null);
 };

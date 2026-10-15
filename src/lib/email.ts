@@ -91,3 +91,49 @@ export async function kirimRingkasanPermintaan(isi: IsiSurel): Promise<boolean> 
     return false;
   }
 }
+
+/**
+ * Kirim tautan atur ulang sandi ke surel developer.
+ *
+ * Dipakai alur "lupa sandi" di halaman developer. Mengembalikan `false` bila
+ * surel belum diisi atau pengirimannya gagal; pemanggil yang memutuskan apa
+ * yang ditampilkan ke pengguna.
+ */
+export async function kirimTautanResetDeveloper(
+  tautan: string
+): Promise<boolean> {
+  if (!statusSurel().aktif) return false;
+
+  try {
+    const port = Number(process.env.SMTP_PORT ?? 587);
+    const pengirim = nodemailer.createTransport({
+      host: process.env.SMTP_HOST,
+      port,
+      secure: port === 465,
+      auth: {
+        user: process.env.SMTP_USER,
+        pass: process.env.SMTP_PASSWORD,
+      },
+    });
+
+    await pengirim.sendMail({
+      from: process.env.SMTP_USER,
+      to: emailDeveloper() ?? "",
+      subject: "[JoyOps] Atur ulang sandi developer",
+      text: [
+        "Ada permintaan atur ulang sandi untuk halaman developer JoyOps.",
+        "",
+        "Buka tautan berikut untuk menetapkan sandi baru:",
+        tautan,
+        "",
+        "Tautan berlaku 30 menit dan hanya bisa dipakai sekali.",
+        "Kalau Anda tidak meminta ini, abaikan saja surel ini.",
+      ].join("\n"),
+    });
+
+    return true;
+  } catch (kesalahan) {
+    catatKegagalan("kirimTautanResetDeveloper", kesalahan);
+    return false;
+  }
+}

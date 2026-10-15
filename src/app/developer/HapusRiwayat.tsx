@@ -18,19 +18,23 @@ export function HapusRiwayat({
 }) {
   const [, kirim, jalan] = useActionState(hapusPermintaanAction, null);
 
+  const kelas = semua
+    ? "joyops-aksi inline-flex min-h-11 items-center gap-1.5 rounded-sm border border-danger px-3 py-2 text-kecil font-semibold text-danger hover:bg-danger-soft disabled:cursor-not-allowed disabled:opacity-55"
+    : "joyops-aksi inline-flex min-h-11 shrink-0 items-center gap-1.5 rounded-sm px-2.5 py-2 text-kecil font-medium text-ink-muted hover:bg-danger-soft hover:text-danger disabled:cursor-not-allowed disabled:opacity-55";
+
   return (
     <form action={kirim}>
       <input type="hidden" name="id" value={String(id)} />
-      <button
-        type="submit"
-        disabled={jalan}
-        className={
-          semua
-            ? "rounded-md border border-dang/40 px-3 py-1.5 font-mono text-kecil text-dang hover:bg-dang/10 disabled:opacity-50"
-            : "rounded-md px-2 py-1 font-mono text-kecil text-muted hover:bg-hov hover:text-dang disabled:opacity-50"
-        }
-      >
-        {jalan ? "Menghapus..." : semua ? "Hapus semua riwayat" : "Hapus"}
+      <button type="submit" disabled={jalan} className={kelas}>
+        <span
+          aria-hidden="true"
+          className="material-symbols-outlined text-[1.15em]"
+        >
+          {semua ? "delete_sweep" : "delete"}
+        </span>
+        <span>
+          {jalan ? "Menghapus…" : semua ? "Hapus semua riwayat" : "Hapus"}
+        </span>
       </button>
     </form>
   );

@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState, useTransition } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import {
   hapusSemuaNotifikasiAction,
   tandaiDibacaAction,
@@ -49,6 +50,7 @@ export function LoncengNotifikasi({
   const [unreadCount, setUnreadCount] = useState<number>(jumlah);
   const [sedangMemproses, startTransition] = useTransition();
   const wadahRef = useRef<HTMLDivElement>(null);
+  const router = useRouter();
 
   // Selaraskan dengan data server saat ada navigasi atau data baru
   useEffect(() => {
@@ -88,18 +90,26 @@ export function LoncengNotifikasi({
 
     startTransition(async () => {
       const data = new FormData();
-      await tandaiSemuaDibacaAction(null, data);
+      const hasil = await tandaiSemuaDibacaAction(null, data);
+      // Kalau penulisan tidak mengenai baris mana pun, tarik ulang dari
+      // server supaya tampilan tidak terus berbohong.
+      if (!hasil.ok) router.refresh();
     });
   }
 
   // Hapus semua notifikasi secara manual
   function handleHapusSemua() {
+    const jumlahSebelumnya = items.length;
     setUnreadCount(0);
     setItems([]);
 
     startTransition(async () => {
       const data = new FormData();
-      await hapusSemuaNotifikasiAction(null, data);
+      const hasil = await hapusSemuaNotifikasiAction(null, data);
+      // Nol baris terhapus padahal ada isinya berarti penghapusan ditolak.
+      if (!hasil.ok || (jumlahSebelumnya > 0 && hasil.data === 0)) {
+        router.refresh();
+      }
     });
   }
 
@@ -115,7 +125,8 @@ export function LoncengNotifikasi({
     startTransition(async () => {
       const data = new FormData();
       data.append("id", String(id));
-      await tandaiDibacaAction(null, data);
+      const hasil = await tandaiDibacaAction(null, data);
+      if (!hasil.ok) router.refresh();
     });
   }
 
