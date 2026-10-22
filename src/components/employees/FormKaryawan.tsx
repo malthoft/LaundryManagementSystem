@@ -14,7 +14,7 @@ import {
 import type { Profil } from "@/types/db";
 
 /** Tambah akun karyawan. Sandi awal diisi Admin, bukan dibuat sistem. */
-export function FormKaryawanBaru({ jumlahAdmin }: { jumlahAdmin: number }) {
+export function FormKaryawanBaru({ jumlahAdmin: _jumlahAdmin }: { jumlahAdmin: number }) {
   const [buka, setBuka] = useState(false);
   const [hasil, kirim, sedangKirim] = useActionState(tambahKaryawanAction, null);
   const galat = hasil && !hasil.ok ? hasil.field : undefined;
@@ -68,15 +68,8 @@ export function FormKaryawanBaru({ jumlahAdmin }: { jumlahAdmin: number }) {
               required
               defaultValue="Karyawan"
               galat={galat?.peran}
-              opsi={[
-                { nilai: "Karyawan", label: "Karyawan" },
-                { nilai: "Admin", label: "Admin" },
-              ]}
-              petunjuk={
-                jumlahAdmin <= 1
-                  ? "Saat ini hanya ada satu Admin aktif. Menambah Admin kedua membuat Anda tidak terkunci sendiri."
-                  : undefined
-              }
+              opsi={[{ nilai: "Karyawan", label: "Karyawan" }]}
+              petunjuk="Akun Admin hanya bisa dibuat lewat mode developer."
             />
             <Kolom
               label="Sandi awal"
@@ -151,10 +144,8 @@ export function FormUbahKaryawan({ karyawan }: { karyawan: Profil }) {
             required
             defaultValue={karyawan.role}
             galat={galat?.peran}
-            opsi={[
-              { nilai: "Karyawan", label: "Karyawan" },
-              { nilai: "Admin", label: "Admin" },
-            ]}
+            opsi={[{ nilai: "Karyawan", label: "Karyawan" }]}
+            petunjuk="Peran Admin tidak bisa diubah dari sini. Hubungi developer."
           />
 
           <Centang

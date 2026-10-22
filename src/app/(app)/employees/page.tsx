@@ -41,6 +41,11 @@ export default async function HalamanKaryawan() {
 
   const siapKelola = apakahAdminTersedia();
 
+  // Admin hanya boleh mengatur peran di bawahnya. Sesama Admin tidak saling
+  // mengubah, dan akun sendiri tidak diubah dari halaman ini.
+  const bolehKelola = (peranSaya: string, peranOrang: string) =>
+    peranSaya === "Admin" && peranOrang === "Karyawan";
+
   return (
     <div className="flex flex-col gap-5">
       <JudulHalaman
@@ -119,10 +124,18 @@ export default async function HalamanKaryawan() {
                   <SelTabel className="angka">{tanggal(orang.created_at)}</SelTabel>
                   <SelTabel>
                     {siapKelola ? (
-                      <div className="flex flex-wrap items-center gap-2">
-                        <FormUbahKaryawan karyawan={orang} />
-                        <FormResetSandi karyawan={orang} />
-                      </div>
+                      bolehKelola(profil.role, orang.role) ? (
+                        <div className="flex flex-wrap items-center gap-2">
+                          <FormUbahKaryawan karyawan={orang} />
+                          <FormResetSandi karyawan={orang} />
+                        </div>
+                      ) : (
+                        <span className="text-kecil text-ink-muted">
+                          {orang.id === profil.id
+                            ? "Akun sendiri"
+                            : "Peran setingkat atau di atas Anda"}
+                        </span>
+                      )
                     ) : (
                       <span className="text-kecil text-ink-muted">Tidak tersedia</span>
                     )}

@@ -82,6 +82,35 @@ export function FormMesin({
             galat={galat?.tipe}
           />
 
+          <div className="grid gap-4 sm:grid-cols-2">
+            <Kolom
+              label="Kapasitas (kg)"
+              name="kapasitasKg"
+              type="number"
+              inputMode="decimal"
+              step={0.5}
+              min={5}
+              max={30}
+              required
+              defaultValue={mesin?.capacity_kg ?? 10}
+              galat={galat?.kapasitasKg}
+              petunjuk="Antara 5 dan 30 kg."
+            />
+            <Kolom
+              label="Kapasitas (pcs)"
+              name="kapasitasPcs"
+              type="number"
+              inputMode="numeric"
+              step={1}
+              min={5}
+              max={50}
+              required
+              defaultValue={mesin?.capacity_pcs ?? 20}
+              galat={galat?.kapasitasPcs}
+              petunjuk="Antara 5 dan 50 potongan."
+            />
+          </div>
+
           <Pilihan
             label="Status"
             name="status"

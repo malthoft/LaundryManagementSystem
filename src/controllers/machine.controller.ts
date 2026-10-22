@@ -35,13 +35,15 @@ export const simpanMesinAction: AksiForm<null> = async (_sebelumnya, data) => {
     kode: teks(data, "kode"),
     tipe: teks(data, "tipe"),
     status: teks(data, "status"),
+    kapasitasKg: teks(data, "kapasitasKg"),
+    kapasitasPcs: teks(data, "kapasitasPcs"),
   });
 
   if (!cek.success) {
     return gagal("Periksa kembali isian mesin.", pesanPerField(cek.error));
   }
 
-  const { id, kode, tipe, status } = cek.data;
+  const { id, kode, tipe, status, kapasitasKg, kapasitasPcs } = cek.data;
   const supabase = await buatKlienServer();
 
   try {
@@ -50,12 +52,16 @@ export const simpanMesinAction: AksiForm<null> = async (_sebelumnya, data) => {
         machine_code: kode,
         machine_type: tipe,
         status,
+        capacity_kg: kapasitasKg,
+        capacity_pcs: kapasitasPcs,
       });
     } else {
       await buatMesin(supabase, {
         machine_code: kode,
         machine_type: tipe,
         status,
+        capacity_kg: kapasitasKg,
+        capacity_pcs: kapasitasPcs,
       });
     }
 

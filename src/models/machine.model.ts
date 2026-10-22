@@ -3,12 +3,14 @@ import type { Mesin, StatusMesin } from "@/types/db";
 import type { MesinTersedia, RingkasanMesin } from "@/types/domain";
 
 export const KOLOM_MESIN =
-  "id, machine_code, machine_type, status, last_used, available_at, created_at";
+  "id, machine_code, machine_type, status, capacity_kg, capacity_pcs, last_used, available_at, created_at";
 
 export interface MesinBaru {
   machine_code: string;
   machine_type: string;
   status: StatusMesin;
+  capacity_kg: number;
+  capacity_pcs: number;
 }
 
 /** Semua mesin. Yang Tersedia tampil lebih dulu supaya cepat dipilih. */

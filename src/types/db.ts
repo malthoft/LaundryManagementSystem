@@ -51,6 +51,8 @@ export interface Mesin {
   machine_code: string;
   machine_type: string;
   status: StatusMesin;
+  capacity_kg: number;
+  capacity_pcs: number;
   last_used: string | null;
   available_at: string | null;
   created_at: string;

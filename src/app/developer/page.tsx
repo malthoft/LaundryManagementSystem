@@ -82,11 +82,18 @@ export default async function HalamanDeveloper() {
           />
         </div>
 
-        <form action={keluarDeveloperAction}>
-          <Tombol type="submit" varian="sekunder" ukuran="kecil" ikon="logout">
-            Keluar
-          </Tombol>
-        </form>
+        <div className="flex flex-wrap items-center gap-2">
+          <a href="/developer/akun">
+            <Tombol varian="sekunder" ukuran="kecil" ikon="group">
+              Kelola akun
+            </Tombol>
+          </a>
+          <form action={keluarDeveloperAction}>
+            <Tombol type="submit" varian="sekunder" ukuran="kecil" ikon="logout">
+              Keluar
+            </Tombol>
+          </form>
+        </div>
       </header>
 
       <section className="mt-6 grid gap-3 sm:grid-cols-3">

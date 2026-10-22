@@ -32,6 +32,10 @@ export function KartuMesin({ mesin, admin }: { mesin: Mesin; admin: boolean }) {
       </div>
 
       <p className="angka text-mini text-ink-muted">
+        Kapasitas: {mesin.capacity_kg} kg · {mesin.capacity_pcs} pcs
+      </p>
+
+      <p className="angka text-mini text-ink-muted">
         Terakhir dipakai: {mesin.last_used ? tanggalJam(mesin.last_used) : "belum pernah"}
       </p>
 

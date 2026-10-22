@@ -11,6 +11,9 @@ import {
   skemaMasukDeveloper,
   skemaLupaSandiDeveloper,
   skemaAturSandiDeveloper,
+  skemaUbahAkunDeveloper,
+  skemaResetSandiAkunDeveloper,
+  skemaStatusAkunDeveloper,
 } from "@/lib/validation";
 import {
   NAMA_COOKIE_SESI,
@@ -49,6 +52,12 @@ import {
   type PermintaanAkun,
   type StatusPermintaan,
 } from "@/models/permintaan.model";
+import {
+  ambilProfilById,
+  ambilSemuaProfil,
+  hitungAdminAktif,
+  simpanProfil,
+} from "@/models/profile.model";
 
 /** Alamat asal aplikasi, dipakai untuk menyusun tautan atur ulang. */
 async function asalAplikasi(): Promise<string> {
@@ -337,5 +346,170 @@ export const hapusPermintaanAction: AksiForm<null> = async (_sebelum, data) => {
       "Belum bisa menghapus riwayat: " +
         (kesalahan instanceof Error ? kesalahan.message : "galat tidak diketahui")
     );
+  }
+};
+
+/**
+ * Mode developer: kelola akun.
+ *
+ * Developer berdiri di luar hierarki peran aplikasi. Ia bukan peran ketiga,
+ * jadi ia boleh mengatur semua akun — termasuk membuat Admin, mengubah peran,
+ * dan mereset sandi. Yang tidak boleh dilakukan aplikasi untuk Admin, yaitu
+ * mengatur sesama Admin, justru pekerjaan developer.
+ *
+ * Setiap aksi di bawah memeriksa ulang sesi developer, bukan mengandalkan
+ * tampilan. Tanpa itu, aksi ini bisa dipanggil langsung tanpa lewat form.
+ */
+
+/**
+ * Daftar akun untuk halaman kelola akun developer.
+ *
+ * Dipisah dari `muatHalamanDeveloper` supaya halaman kelola akun tidak ikut
+ * memuat daftar permintaan yang tidak dipakainya.
+ */
+export async function muatDaftarAkunDeveloper(): Promise<{
+  akun: Array<{
+    id: string;
+    username: string;
+    nama: string;
+    peran: string;
+    aktif: boolean;
+    dibuat: string;
+  }>;
+  jumlahAdmin: number;
+}> {
+  const klien = buatKlienAdmin();
+  const daftar = await ambilSemuaProfil(klien);
+  return {
+    akun: daftar.map((p) => ({
+      id: p.id,
+      username: p.username,
+      nama: p.full_name,
+      peran: p.role,
+      aktif: p.is_active,
+      dibuat: p.created_at,
+    })),
+    jumlahAdmin: await hitungAdminAktif(klien),
+  };
+}
+
+/** Ubah nama, peran, atau status aktif seorang pengguna. */
+export const ubahAkunAction: AksiForm<null> = async (_sebelum, data) => {
+  if (!(await sesiSah())) return gagal(PESAN_SESI_HABIS);
+  if (!apakahAdminTersedia()) {
+    return gagal("SUPABASE_SERVICE_ROLE_KEY belum diisi.");
+  }
+
+  const cek = skemaUbahAkunDeveloper.safeParse({
+    id: teks(data, "id"),
+    nama: teks(data, "nama"),
+    peran: teks(data, "peran"),
+    aktif: teks(data, "aktif") === "true",
+  });
+  if (!cek.success) {
+    return gagal("Periksa kembali isian akun.", pesanPerField(cek.error));
+  }
+
+  const { id, nama, peran, aktif } = cek.data;
+  const klien = buatKlienAdmin();
+
+  const sasaran = await ambilProfilById(klien, id);
+  if (!sasaran) return gagal("Akun tidak ditemukan.");
+
+  // Satu Admin aktif harus selalu tersisa, kalau tidak halaman keuangan dan
+  // data karyawan tidak bisa dibuka siapa pun.
+  const kehilanganAdmin =
+    sasaran.role === "Admin" && (peran !== "Admin" || !aktif);
+  if (kehilanganAdmin && (await hitungAdminAktif(klien)) <= 1) {
+    return gagal(
+      "Ini satu-satunya Admin aktif. Angkat Admin lain dulu sebelum mengubah yang ini."
+    );
+  }
+
+  try {
+    await simpanProfil(klien, id, {
+      full_name: nama,
+      role: peran,
+      is_active: aktif,
+    });
+    revalidatePath("/developer/akun");
+    return berhasil(null);
+  } catch (kesalahan) {
+    catatKegagalan("ubahAkunAction", kesalahan);
+    return gagal("Perubahan akun gagal disimpan.");
+  }
+};
+
+/** Reset sandi seorang pengguna. Sandi baru dibalikkan supaya bisa disampaikan. */
+export const resetSandiAkunAction: AksiForm<{ sandi: string }> = async (
+  _sebelum,
+  data
+) => {
+  if (!(await sesiSah())) return gagal(PESAN_SESI_HABIS);
+  if (!apakahAdminTersedia()) {
+    return gagal("SUPABASE_SERVICE_ROLE_KEY belum diisi.");
+  }
+
+  const cek = skemaResetSandiAkunDeveloper.safeParse({
+    id: teks(data, "id"),
+    sandi: teks(data, "sandi"),
+  });
+  if (!cek.success) {
+    return gagal("Periksa kembali isian sandi.", pesanPerField(cek.error));
+  }
+
+  const { id, sandi } = cek.data;
+  const klien = buatKlienAdmin();
+
+  const sasaran = await ambilProfilById(klien, id);
+  if (!sasaran) return gagal("Akun tidak ditemukan.");
+
+  try {
+    const { error } = await klien.auth.admin.updateUserById(id, {
+      password: sandi,
+    });
+    if (error) return gagal(`Sandi gagal direset: ${error.message}`);
+    revalidatePath("/developer/akun");
+    return berhasil({ sandi });
+  } catch (kesalahan) {
+    catatKegagalan("resetSandiAkunAction", kesalahan);
+    return gagal("Sandi gagal direset.");
+  }
+};
+
+/** Aktifkan atau nonaktifkan akun tanpa membuka formulir penuh. */
+export const ubahStatusAkunAction: AksiForm<null> = async (_sebelum, data) => {
+  if (!(await sesiSah())) return gagal(PESAN_SESI_HABIS);
+  if (!apakahAdminTersedia()) {
+    return gagal("SUPABASE_SERVICE_ROLE_KEY belum diisi.");
+  }
+
+  const cek = skemaStatusAkunDeveloper.safeParse({
+    id: teks(data, "id"),
+    aktif: teks(data, "aktif") === "true",
+  });
+  if (!cek.success) {
+    return gagal("Periksa kembali isian akun.", pesanPerField(cek.error));
+  }
+
+  const { id, aktif } = cek.data;
+  const klien = buatKlienAdmin();
+
+  const sasaran = await ambilProfilById(klien, id);
+  if (!sasaran) return gagal("Akun tidak ditemukan.");
+
+  if (!aktif && sasaran.role === "Admin" && (await hitungAdminAktif(klien)) <= 1) {
+    return gagal(
+      "Ini satu-satunya Admin aktif. Nonaktifkan akun ini akan mengunci seluruh aplikasi."
+    );
+  }
+
+  try {
+    await simpanProfil(klien, id, { is_active: aktif });
+    revalidatePath("/developer/akun");
+    return berhasil(null);
+  } catch (kesalahan) {
+    catatKegagalan("ubahStatusAkunAction", kesalahan);
+    return gagal("Status akun gagal diubah.");
   }
 };

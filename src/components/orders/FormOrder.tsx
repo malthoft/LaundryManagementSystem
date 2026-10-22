@@ -8,6 +8,7 @@ import { PesanHasil } from "@/components/ui/Keadaan";
 import { IonIcon } from "@/components/ui/IonIcon";
 import { durasi, rupiah, tanggal } from "@/lib/format";
 import { hariIni } from "@/lib/date";
+import { batasQty } from "@/lib/batas";
 import type { Addon, Layanan, Mesin } from "@/types/db";
 
 interface InfoPopupSukses {
@@ -78,6 +79,26 @@ export function FormOrder({
     [layanan, serviceId]
   );
 
+  // BR-18: satu muatan harus lolos KEDUA mesin, jadi batasnya kapasitas
+  // terkecil — bukan jumlah kapasitas keduanya. Server tetap memeriksa
+  // ulang (BR-16), ini hanya kenyamanan di layar.
+  const maksMuatan = useMemo(() => {
+    if (!layananTerpilih || !mesinCuciTerpilih || !mesinPengeringTerpilih) {
+      return null;
+    }
+    return batasQty({
+      unit: layananTerpilih.unit,
+      kapasitasMesinCuci: {
+        kg: mesinCuciTerpilih.capacity_kg,
+        pcs: mesinCuciTerpilih.capacity_pcs,
+      },
+      kapasitasMesinPengering: {
+        kg: mesinPengeringTerpilih.capacity_kg,
+        pcs: mesinPengeringTerpilih.capacity_pcs,
+      },
+    });
+  }, [layananTerpilih, mesinCuciTerpilih, mesinPengeringTerpilih]);
+
   const addonTerpilih = useMemo(
     () => addon.filter((item) => addonDipilih.includes(item.id)),
     [addon, addonDipilih]
@@ -142,6 +163,8 @@ export function FormOrder({
     const jumlah = Number(qty);
     if (!Number.isFinite(jumlah) || jumlah <= 0) {
       galat.qty = "Jumlah / berat harus lebih dari 0";
+    } else if (maksMuatan !== null && jumlah > maksMuatan) {
+      galat.qty = `Melebihi kapasitas mesin. Maksimal ${maksMuatan} ${layananTerpilih?.unit}.`;
     }
 
     if (Object.keys(galat).length > 0) {
@@ -255,12 +278,17 @@ export function FormOrder({
             }))}
           />
           <Kolom
-            label={layananTerpilih ? `Jumlah Cucian (${layananTerpilih.unit})` : "Jumlah Cucian"}
+            label={
+              layananTerpilih
+                ? `Jumlah Cucian (${layananTerpilih.unit})`
+                : "Jumlah Cucian"
+            }
             name="qty"
             type="number"
             inputMode="decimal"
             step={layananTerpilih?.unit === "pcs" ? 1 : 0.1}
             min={layananTerpilih?.unit === "pcs" ? 1 : 0.1}
+            max={maksMuatan ?? undefined}
             required
             galat={galat.qty}
             value={qty}
@@ -269,6 +297,12 @@ export function FormOrder({
               setGalatLokal((prev) => ({ ...prev, qty: "" }));
             }}
           />
+          {maksMuatan !== null && (
+            <p className="mt-1 text-kecil text-ink-muted">
+              Maksimal {maksMuatan} {layananTerpilih?.unit} — mengikuti kapasitas
+              terkecil dari mesin cuci dan mesin pengering yang dipilih.
+            </p>
+          )}
         </div>
 
         <fieldset className="rounded-lg border border-line bg-paper/40 p-4">

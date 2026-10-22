@@ -208,4 +208,46 @@ describe("batas jumlah cucian mengikuti kapasitas mesin", () => {
       })
     ).toBe(30);
   });
+
+  it("tidak pernah menjumlahkan kapasitas kedua mesin", () => {
+    // 10 + 8 = 18. Kalau dijumlahkan, muatan 12 kg lolos padahal
+    // mesin pengering hanya muat 8 kg.
+    expect(batasQty(mesin)).not.toBe(18);
+    expect(batasQty(mesin)).toBe(8);
+  });
+
+  it("mengambil kapasitas mesin pengering bila lebih kecil", () => {
+    expect(
+      batasQty({
+        unit: "kg",
+        kapasitasMesinCuci: { kg: 20, pcs: 40 },
+        kapasitasMesinPengering: { kg: 6, pcs: 40 },
+      })
+    ).toBe(6);
+  });
+
+  it("mengambil kapasitas mesin cuci bila lebih kecil", () => {
+    expect(
+      batasQty({
+        unit: "kg",
+        kapasitasMesinCuci: { kg: 7, pcs: 40 },
+        kapasitasMesinPengering: { kg: 25, pcs: 40 },
+      })
+    ).toBe(7);
+  });
+
+  it("memakai kolom pcs terpisah dari kolom kg", () => {
+    // cuci pcs 20 vs pengering pcs 30 -> ambil 20, bukan 30 atau 50.
+    expect(batasQty({ ...mesin, unit: "pcs" })).toBe(20);
+  });
+
+  it("sama dengan nol bila salah satu mesin kapasitasnya nol", () => {
+    expect(
+      batasQty({
+        unit: "kg",
+        kapasitasMesinCuci: { kg: 0, pcs: 20 },
+        kapasitasMesinPengering: { kg: 10, pcs: 20 },
+      })
+    ).toBe(0);
+  });
 });

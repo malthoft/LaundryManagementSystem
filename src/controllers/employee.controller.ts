@@ -19,6 +19,7 @@ import {
   simpanProfil,
 } from "@/models/profile.model";
 import { kirimNotifikasi } from "@/models/notification.model";
+import { bolehKelolaPeran, alasanTidakBoleh } from "@/lib/peran";
 
 const PESAN_TANPA_KUNCI =
   "SUPABASE_SERVICE_ROLE_KEY belum diisi, jadi akun tidak bisa dibuat atau sandinya direset. Isi dulu di berkas .env.local.";
@@ -55,6 +56,15 @@ export const tambahKaryawanAction: AksiForm<{ sandi: string }> = async (
 
   const { username, nama, peran, sandi } = cek.data;
   const supabase = await buatKlienServer();
+
+  // Admin tidak boleh membuat akun Admin baru: itu berarti menaikkan akun ke
+  // tingkatnya sendiri. Hanya developer yang boleh membuat Admin.
+  if (peran === "Admin") {
+    return gagal(
+      "Admin tidak bisa membuat akun Admin baru. Hanya developer yang boleh menambah Admin.",
+      { peran: "Pilih Karyawan. Hubungi developer untuk akun Admin." }
+    );
+  }
 
   if (await ambilProfilByUsername(supabase, username)) {
     return gagal("Username itu sudah dipakai.", {
@@ -127,6 +137,18 @@ export const ubahKaryawanAction: AksiForm<null> = async (_sebelumnya, data) => {
   const sasaran = await ambilProfilById(supabase, id);
   if (!sasaran) return gagal("Karyawan tidak ditemukan.");
 
+  // Hierarki peran: Admin hanya boleh mengatur peran yang di bawahnya.
+  // Sesama Admin tidak bisa saling mengubah, dan peran tidak bisa dinaikkan
+  // sampai setinggi pengaturnya.
+  if (sasaran.id === profil.id) {
+    return gagal(
+      "Anda tidak bisa mengubah peran atau status akun Anda sendiri. Minta Admin lain."
+    );
+  }
+  if (!bolehKelolaPeran(profil.role, sasaran.role, peran)) {
+    return gagal(alasanTidakBoleh(profil.role, sasaran.role));
+  }
+
   // Jangan sampai instalasi ini kehilangan Admin terakhirnya.
   const kehilanganAdmin =
     sasaran.role === "Admin" && (peran !== "Admin" || !aktif);
@@ -172,6 +194,17 @@ export const resetSandiAction: AksiForm<{ sandi: string }> = async (
   const supabase = await buatKlienServer();
   const sasaran = await ambilProfilById(supabase, cek.data.id);
   if (!sasaran) return gagal("Karyawan tidak ditemukan.");
+
+  // Mereset sandi sama kuatnya dengan mengambil alih akun, jadi aturan
+  // hierarkinya sama dengan mengubah peran.
+  if (sasaran.id === profil.id) {
+    return gagal("Anda tidak bisa mereset sandi akun Anda sendiri dari sini.");
+  }
+  if (!bolehKelolaPeran(profil.role, sasaran.role, "Karyawan")) {
+    return gagal(
+      `${profil.role} hanya boleh mereset sandi peran yang di bawahnya. ${alasanTidakBoleh(profil.role, sasaran.role)}`
+    );
+  }
 
   const admin = buatKlienAdmin();
 

@@ -388,6 +388,34 @@ export const skemaAturSandiDeveloper = z
     message: "Ulangan sandi tidak sama",
   });
 
+// --- Mode developer: kelola akun -------------------------------------------
+
+/**
+ * Developer berdiri di luar hierarki peran, jadi skema di bawah sengaja
+ * mengizinkan peran apa pun — termasuk membuat dan mengubah Admin. Pembatasan
+ * "Admin tidak boleh mengatur sesama Admin" ada di controller karyawan, bukan
+ * di sini, supaya jalur developer tidak ikut terbatas.
+ */
+export const skemaUbahAkunDeveloper = z.object({
+  id: z.string().uuid("Akun tidak valid"),
+  nama: teksWajib("Nama", 2, 100),
+  peran: z.enum(["Admin", "Karyawan"]),
+  aktif: z.coerce.boolean(),
+});
+
+export const skemaResetSandiAkunDeveloper = z.object({
+  id: z.string().uuid("Akun tidak valid"),
+  sandi: z
+    .string({ required_error: "Sandi baru wajib diisi" })
+    .min(6, "Sandi minimal 6 karakter")
+    .max(72, "Sandi maksimal 72 karakter"),
+});
+
+export const skemaStatusAkunDeveloper = z.object({
+  id: z.string().uuid("Akun tidak valid"),
+  aktif: z.coerce.boolean(),
+});
+
 // --- Pembantu --------------------------------------------------------------
 
 /** Ubah ZodError menjadi peta pesan per nama field. */

@@ -16,6 +16,7 @@ import {
 } from "@/models/order.model";
 import { ambilMesinById } from "@/models/machine.model";
 import { ambilLayananAktif } from "@/models/service.model";
+import { batasQty } from "@/lib/batas";
 import { kirimNotifikasi } from "@/models/notification.model";
 
 /** Beri tahu semua pengguna bahwa ada order baru yang perlu dikerjakan. */
@@ -134,6 +135,26 @@ export const buatOrderBaru: AksiForm<{
     return gagal("Jumlah pcs harus bilangan bulat.", {
       qty: `Jumlah untuk layanan ${layanan.service_name} harus bulat`,
     });
+  }
+
+  // BR-18: satu muatan harus lolos KEDUA mesin, jadi batasnya kapasitas
+  // terkecil — bukan jumlah kapasitas keduanya. Dijaga di server karena
+  // batas di layar hanya kenyamanan (BR-16).
+  const maksMuatan = batasQty({
+    unit: layanan.unit,
+    kapasitasMesinCuci: { kg: cuci.capacity_kg, pcs: cuci.capacity_pcs },
+    kapasitasMesinPengering: {
+      kg: pengering.capacity_kg,
+      pcs: pengering.capacity_pcs,
+    },
+  });
+  if (isian.qty > maksMuatan) {
+    return gagal(
+      `Jumlah ${isian.qty} ${layanan.unit} melebihi kapasitas mesin. Maksimal ${maksMuatan} ${layanan.unit} untuk ${cuci.machine_code} & ${pengering.machine_code}.`,
+      {
+        qty: `Maksimal ${maksMuatan} ${layanan.unit} (kapasitas terkecil dari kedua mesin)`,
+      }
+    );
   }
 
   let kode = "";
