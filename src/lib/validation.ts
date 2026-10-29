@@ -125,7 +125,7 @@ export const skemaOrderBaru = z.object({
   namaPelanggan: teksWajib("Nama pelanggan", 1, 100),
   qty: z.coerce
     .number({ invalid_type_error: "Qty harus berupa angka" })
-    .positive("Qty harus lebih dari 0")
+    .min(1, "Qty minimal 1")
     .max(BATAS_QTY.maks, "Qty melebihi kapasitas mesin"),
   durasiOrder: z.coerce
     .number({ invalid_type_error: "Durasi harus berupa angka" })

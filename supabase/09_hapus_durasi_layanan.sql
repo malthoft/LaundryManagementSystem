@@ -50,8 +50,8 @@ begin
     raise exception 'Mesin cuci dan pengering harus berbeda' using errcode = '23514';
   end if;
 
-  if p_qty is null or p_qty <= 0 then
-    raise exception 'Qty harus lebih dari 0' using errcode = '23514';
+  if p_qty is null or p_qty < 1 then
+    raise exception 'Qty harus minimal 1' using errcode = '23514';
   end if;
 
   if p_duration_minutes is null or p_duration_minutes < 1 or p_duration_minutes > 180 then
@@ -105,8 +105,8 @@ begin
   end if;
 
   v_qty := round(coalesce(p_qty, 0), 2);
-  if v_qty <= 0 then
-    raise exception 'Qty harus lebih dari 0' using errcode = '22023';
+  if v_qty < 1 then
+    raise exception 'Qty harus minimal 1' using errcode = '22023';
   end if;
 
   -- Durasi dari form order, bukan dari layanan

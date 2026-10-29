@@ -287,8 +287,8 @@ export function FormOrder({
             name="qty"
             type="number"
             inputMode="decimal"
-            step={layananTerpilih?.unit === "pcs" ? 1 : 0.1}
-            min={layananTerpilih?.unit === "pcs" ? 1 : 0.1}
+            step={layananTerpilih?.unit === "pcs" ? 1 : 0.5}
+            min={layananTerpilih?.unit === "pcs" ? 1 : 1}
             max={maksMuatan ?? undefined}
             required
             galat={galat.qty}
