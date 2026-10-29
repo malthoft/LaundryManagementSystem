@@ -96,19 +96,6 @@ export function FormLayanan({
           </div>
 
           <Kolom
-            label="Durasi pengerjaan"
-            name="durasi"
-            type="number"
-            inputMode="numeric"
-            min="1"
-            max="1440"
-            required
-            defaultValue={layanan ? String(layanan.duration_minutes) : "90"}
-            galat={galat?.durasi}
-            petunjuk="Dalam menit. Minimal 1 menit."
-          />
-
-          <Kolom
             label="Nama ikon"
             name="ikon"
             defaultValue={layanan?.icon ?? "local_laundry_service"}

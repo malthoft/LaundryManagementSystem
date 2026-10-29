@@ -62,6 +62,7 @@ export const buatOrderBaru: AksiForm<{
     serviceId: teks(data, "serviceId"),
     namaPelanggan: teks(data, "namaPelanggan"),
     qty: teks(data, "qty"),
+    durasiOrder: teks(data, "durasiOrder"),
     addonIds: daftarAngka(data, "addonIds"),
     metodeBayar: teks(data, "metodeBayar"),
     catatan: teks(data, "catatan"),
@@ -119,12 +120,6 @@ export const buatOrderBaru: AksiForm<{
   if (!layanan) {
     return gagal("Layanan tidak ditemukan atau sudah tidak aktif.", {
       serviceId: "Pilih layanan yang aktif",
-    });
-  }
-
-  if (layanan.duration_minutes < 1) {
-    return gagal("Durasi layanan belum diatur. Perbaiki di menu Layanan.", {
-      serviceId: "Durasi layanan minimal 1 menit",
     });
   }
 

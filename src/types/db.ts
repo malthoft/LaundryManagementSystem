@@ -63,7 +63,6 @@ export interface Layanan {
   service_name: string;
   price: number;
   unit: SatuanLayanan;
-  duration_minutes: number;
   icon: string;
   is_active: boolean;
   created_at: string;

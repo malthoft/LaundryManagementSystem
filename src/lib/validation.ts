@@ -1,7 +1,6 @@
 import { z } from "zod";
 import {
   BATAS_BULAN,
-  BATAS_DURASI,
   BATAS_HARGA,
   BATAS_JUMLAH,
   BATAS_KAPASITAS_KG,
@@ -128,6 +127,11 @@ export const skemaOrderBaru = z.object({
     .number({ invalid_type_error: "Qty harus berupa angka" })
     .positive("Qty harus lebih dari 0")
     .max(BATAS_QTY.maks, "Qty melebihi kapasitas mesin"),
+  durasiOrder: z.coerce
+    .number({ invalid_type_error: "Durasi harus berupa angka" })
+    .int("Durasi harus bilangan bulat")
+    .min(1, "Durasi minimal 1 menit")
+    .max(180, "Durasi maksimal 180 menit (3 jam)"),
   addonIds: z.array(z.coerce.number().int().positive()).default([]),
   metodeBayar: z.enum(["Cash", "QRIS"], {
     errorMap: () => ({ message: "Metode pembayaran tidak dikenal" }),
@@ -182,11 +186,6 @@ export const skemaLayanan = z.object({
   satuan: z.enum(["kg", "pcs"], {
     errorMap: () => ({ message: "Satuan harus kg atau pcs" }),
   }),
-  durasi: z.coerce
-    .number()
-    .int("Durasi harus bilangan bulat")
-    .min(BATAS_DURASI.min, "Durasi minimal 15 menit")
-    .max(BATAS_DURASI.maks, "Durasi maksimal 4.320 menit (3 hari)"),
   ikon: z.string().max(24, "Ikon maksimal 24 karakter").default("local_laundry_service"),
   aktif: z.coerce.boolean().default(true),
 });

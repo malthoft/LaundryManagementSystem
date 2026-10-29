@@ -24,6 +24,7 @@ export interface OrderBaru {
   serviceId: number;
   namaPelanggan: string;
   qty: number;
+  durasiOrder: number;
   addonIds: number[];
   metodeBayar: MetodeBayar;
   catatan?: string;
@@ -74,6 +75,7 @@ export async function buatOrder(
     p_service_id: masukan.serviceId,
     p_customer_name: masukan.namaPelanggan,
     p_qty: masukan.qty,
+    p_duration_minutes: masukan.durasiOrder,
     p_addon_ids: masukan.addonIds,
     p_payment_method: masukan.metodeBayar,
     p_notes: masukan.catatan ?? null,

@@ -9,7 +9,7 @@ import { BarisTabel, KepalaTabel, SelTabel, Tabel } from "@/components/ui/Tabel"
 import { hapusAddonAction, hapusLayananAction } from "@/controllers/service.controller";
 import { wajibMasuk } from "@/lib/auth";
 import { NADA_AKTIF } from "@/lib/constants";
-import { durasi, rupiah } from "@/lib/format";
+import { rupiah } from "@/lib/format";
 import { buatKlienServer } from "@/lib/supabase/server";
 import { ambilSemuaAddon } from "@/models/addon.model";
 import { ambilSemuaLayanan } from "@/models/service.model";
@@ -58,7 +58,6 @@ export default async function HalamanLayanan() {
                 { label: "Layanan" },
                 { label: "Harga", num: true },
                 { label: "Satuan" },
-                { label: "Durasi" },
                 { label: "Status" },
                 { label: "Aksi" },
               ]}
@@ -69,7 +68,6 @@ export default async function HalamanLayanan() {
                   <SelTabel className="font-semibold">{item.service_name}</SelTabel>
                   <SelTabel num>{rupiah(item.price)}</SelTabel>
                   <SelTabel>{item.unit}</SelTabel>
-                  <SelTabel>{durasi(item.duration_minutes)}</SelTabel>
                   <SelTabel>
                     <Lencana
                       nada={NADA_AKTIF[item.is_active ? "aktif" : "nonaktif"]}

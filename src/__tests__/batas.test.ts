@@ -28,7 +28,7 @@ const KOLOM_WAJIB: readonly string[] = [
   "capacity_kg",
   "capacity_pcs",
   "harga",
-  "durasi",
+  "durasiOrder",
   "ikon",
   "qty",
   "namaPelanggan",
@@ -46,7 +46,7 @@ const KOLOM_WAJIB: readonly string[] = [
 /** Kolom angka yang batasnya harus masuk akal untuk sebuah laundry. */
 const KOLOM_ANGKA = [
   "harga",
-  "durasi",
+  "durasiOrder",
   "jumlah",
   "tahun",
   "minggu",
@@ -92,8 +92,8 @@ describe("batasnya masuk akal untuk laundry", () => {
     expect(BATAS_JUMLAH).toEqual({ min: 500, maks: 10_000_000 });
   });
 
-  it("durasi paling lama tiga hari, bukan sehari", () => {
-    expect(BATAS_DURASI).toEqual({ min: 15, maks: 4_320 });
+  it("durasi ditentukan saat order, maksimal 3 jam", () => {
+    expect(BATAS_DURASI).toEqual({ min: 1, maks: 180 });
   });
 
   it("kapasitas mesin berada di kisaran mesin laundry", () => {
@@ -128,11 +128,11 @@ describe("nilai tepat di batas: yang di dalam diterima, yang di luar ditolak", (
       pesanAtas: "Harga maksimal Rp 500.000",
     },
     {
-      kolom: "durasi",
+      kolom: "durasiOrder",
       min: BATAS_DURASI.min,
       maks: BATAS_DURASI.maks,
-      pesanBawah: "Durasi minimal 15 menit",
-      pesanAtas: "Durasi maksimal 4.320 menit (3 hari)",
+      pesanBawah: "Durasi minimal 1 menit",
+      pesanAtas: "Durasi maksimal 180 menit (3 jam)",
     },
     {
       kolom: "jumlah",

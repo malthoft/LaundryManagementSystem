@@ -59,7 +59,7 @@ const PESAN_MESIN = "Kode harus format WM-01 atau DM-01";
  * Rasional tiap batas tercatat di `RASIONAL_BATAS`.
  */
 export const BATAS_HARGA = { min: 1_000, maks: 500_000 } as const;
-export const BATAS_DURASI = { min: 15, maks: 4_320 } as const;
+export const BATAS_DURASI = { min: 1, maks: 180 } as const;
 export const BATAS_JUMLAH = { min: 500, maks: 10_000_000 } as const;
 export const BATAS_QTY = { min: 1, maks: 50 } as const;
 export const BATAS_TAHUN = { min: 2024, maks: 2035 } as const;
@@ -77,8 +77,8 @@ export const BATAS_KAPASITAS_PCS = { min: 5, maks: 50 } as const;
 export const RASIONAL_BATAS: Readonly<Record<string, string>> = {
   harga:
     "Termurah Rp 1.000 (pewangi atau plastik pembungkus). Termahal Rp 500.000 (bed cover besar, karpet). Di atas itu sudah bukan harga laundry kiloan atau satuan.",
-  durasi:
-    "Tercepat 15 menit untuk setrika satuan. Terlama 4.320 menit atau 3 hari untuk reguler kotor. Lebih dari 3 hari bukan layanan, melainkan penitipan barang.",
+  durasiOrder:
+    "Tercepat 1 menit untuk cucian satuan yang sedikit. Terlama 180 menit atau 3 jam karena satu siklus mesin cuci dan pengering tidak mungkin lebih lama dari itu. Durasi ditentukan saat order dibuat, bukan per layanan.",
   jumlah:
     "Kas terkecil Rp 500 (parkir atau bensin kurir). Terbesar Rp 10.000.000 (servis mesin, beli mesin bekas, atau bayar sewa).",
   qty:
@@ -217,15 +217,15 @@ export const SEMUA_BATAS: readonly BatasIsian[] = [
     pesanAtas: "Harga maksimal Rp 500.000",
   },
   {
-    form: "Layanan",
-    kolom: "durasi",
+    form: "Order",
+    kolom: "durasiOrder",
     jenis: "angka",
     min: BATAS_DURASI.min,
     maks: BATAS_DURASI.maks,
-    pesanBawah: "Durasi minimal 15 menit",
-    pesanAtas: "Durasi maksimal 4.320 menit (3 hari)",
+    pesanBawah: "Durasi minimal 1 menit",
+    pesanAtas: "Durasi maksimal 180 menit (3 jam)",
     pesanLain: "Durasi harus bilangan bulat",
-    aturan: "Wajib bilangan bulat.",
+    aturan: "Wajib bilangan bulat. Durasi ditentukan saat order dibuat, bukan per layanan.",
   },
   {
     form: "Layanan",

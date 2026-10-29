@@ -40,7 +40,6 @@ export const simpanLayananAction: AksiForm<null> = async (_sebelumnya, data) => 
     nama: teks(data, "nama"),
     harga: teks(data, "harga"),
     satuan: teks(data, "satuan"),
-    durasi: teks(data, "durasi"),
     ikon: teks(data, "ikon") || "local_laundry_service",
     aktif: centangForm(data, "aktif"),
   });
@@ -49,14 +48,13 @@ export const simpanLayananAction: AksiForm<null> = async (_sebelumnya, data) => 
     return gagal("Periksa kembali isian layanan.", pesanPerField(cek.error));
   }
 
-  const { id, nama, harga, satuan, durasi, ikon, aktif } = cek.data;
+  const { id, nama, harga, satuan, ikon, aktif } = cek.data;
   const supabase = await buatKlienServer();
 
   const isian = {
     service_name: nama,
     price: harga,
     unit: satuan,
-    duration_minutes: durasi,
     icon: ikon,
     is_active: aktif,
   };

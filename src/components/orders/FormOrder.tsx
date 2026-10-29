@@ -46,6 +46,7 @@ export function FormOrder({
   const [metodeBayar, setMetodeBayar] = useState("Cash");
   const [serviceId, setServiceId] = useState("");
   const [qty, setQty] = useState("1");
+  const [durasiOrder, setDurasiOrder] = useState("90");
   const [addonDipilih, setAddonDipilih] = useState<number[]>([]);
   const [catatan, setCatatan] = useState("");
 
@@ -303,6 +304,23 @@ export function FormOrder({
               terkecil dari mesin cuci dan mesin pengering yang dipilih.
             </p>
           )}
+
+          <Kolom
+            label="Estimasi durasi pengerjaan"
+            name="durasiOrder"
+            type="number"
+            inputMode="numeric"
+            min="1"
+            max="180"
+            required
+            value={durasiOrder}
+            onChange={(e) => {
+              setDurasiOrder(e.target.value);
+              setGalatLokal((prev) => ({ ...prev, durasiOrder: "" }));
+            }}
+            galat={galatLokal.durasiOrder}
+            petunjuk="1 sampai 180 menit (maksimal 3 jam)."
+          />
         </div>
 
         <fieldset className="rounded-lg border border-line bg-paper/40 p-4">
@@ -357,7 +375,7 @@ export function FormOrder({
             {layananTerpilih ? (
               <p className="flex items-center gap-1 text-mikro font-medium text-ink-muted">
                 <IonIcon name="time-outline" size={13} />
-                <span>Estimasi pengerjaan: {durasi(layananTerpilih.duration_minutes)}</span>
+                <span>Estimasi pengerjaan: {durasi(Number(durasiOrder))}</span>
               </p>
             ) : null}
           </div>
@@ -502,7 +520,7 @@ export function FormOrder({
                   {layananTerpilih ? (
                     <p className="mt-1 flex items-center justify-end gap-1 text-mikro font-medium text-ink-muted">
                       <IonIcon name="time-outline" size={13} />
-                      <span>Estimasi selesai: {durasi(layananTerpilih.duration_minutes)}</span>
+                      <span>Estimasi selesai: {durasi(Number(durasiOrder))}</span>
                     </p>
                   ) : null}
                 </div>
@@ -533,6 +551,7 @@ export function FormOrder({
                 <input type="hidden" name="metodeBayar" value={metodeBayar} />
                 <input type="hidden" name="serviceId" value={serviceId} />
                 <input type="hidden" name="qty" value={qty} />
+                <input type="hidden" name="durasiOrder" value={durasiOrder} />
                 {addonDipilih.map((id) => (
                   <input key={id} type="hidden" name="addonIds" value={String(id)} />
                 ))}

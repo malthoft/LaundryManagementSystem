@@ -2,13 +2,12 @@ import type { KlienSupabase } from "@/lib/supabase/server";
 import type { Layanan, SatuanLayanan } from "@/types/db";
 
 export const KOLOM_LAYANAN =
-  "id, service_name, price, unit, duration_minutes, icon, is_active, created_at";
+  "id, service_name, price, unit, icon, is_active, created_at";
 
 export interface LayananBaru {
   service_name: string;
   price: number;
   unit: SatuanLayanan;
-  duration_minutes: number;
   icon: string;
   is_active: boolean;
 }
