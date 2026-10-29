@@ -6,9 +6,14 @@
 alter table public.services
   drop column if exists duration_minutes;
 
--- 2. Fungsi buat_order sekarang menerima durasi dari order, bukan dari layanan.
---    Hapus baris yang masih mengambil durasi dari layanan.
-create or replace function public.buat_order(
+-- 2. Hapus fungsi lama (signature tanpa p_duration_minutes)
+drop function if exists public.buat_order(
+  bigint, bigint, bigint, text, numeric,
+  bigint[], text, text
+);
+
+-- 3. Buat fungsi baru dengan parameter durasi dari order
+create function public.buat_order(
   p_washer_id       bigint,
   p_dryer_id        bigint,
   p_service_id      bigint,
