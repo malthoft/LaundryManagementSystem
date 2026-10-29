@@ -6,10 +6,18 @@
 alter table public.services
   drop column if exists duration_minutes;
 
--- 2. Hapus fungsi lama (signature tanpa p_duration_minutes)
+-- 2. Hapus semua versi fungsi buat_order yang mungkin ada
 drop function if exists public.buat_order(
   bigint, bigint, bigint, text, numeric,
   bigint[], text, text
+);
+drop function if exists public.buat_order(
+  bigint, bigint, bigint, text, numeric, int,
+  bigint[], text, text
+);
+drop function if exists public.buat_order(
+  bigint, bigint, bigint, text, numeric, int,
+  bigint[], text, text, text
 );
 
 -- 3. Buat fungsi baru dengan parameter durasi dari order
